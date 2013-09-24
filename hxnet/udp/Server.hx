@@ -34,8 +34,10 @@ class Server
 			}
 			else
 			{
+				// new connection
 				cnx = Type.createInstance(protocolClass, []);
 				var client = new Socket();
+				client.create();
 				client.connect(remote.address, remote.port);
 				cnx.makeConnection(new Connection(client));
 				connections.set(remote.address, cnx);

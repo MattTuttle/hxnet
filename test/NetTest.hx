@@ -13,7 +13,6 @@ class MyProtocol extends hxnet.protocols.RPC
 		// endless loop...
 		pingCount += 1;
 		call("ping");
-		trace(pingCount);
 	}
 
 	public function pong(a:Int, b:Float)
@@ -27,7 +26,7 @@ class NetTest extends haxe.unit.TestCase
 	public function createRPCServer()
 	{
 		var port = Thread.readMessage(true);
-		var server = new hxnet.udp.Server(MyProtocol, port);
+		var server = new hxnet.tcp.Server(MyProtocol, port);
 		while (Thread.readMessage(false) == null)
 		{
 			server.update();
@@ -49,16 +48,16 @@ class NetTest extends haxe.unit.TestCase
 		serverThread.sendMessage("finish");
 	}
 
-	private inline function updateClient(client:hxnet.udp.Client)
+	private inline function updateClient(client:hxnet.tcp.Client)
 	{
 		// update the client for a bit
-		var i = 100;
+		var i = 1000;
 		while (i-- > 0) client.update();
 	}
 
 	public function testRPC()
 	{
-		var client = new hxnet.udp.Client();
+		var client = new hxnet.tcp.Client();
 		var rpc = new MyProtocol();
 		client.protocol = rpc;
 		client.connect(serverPort);
@@ -71,7 +70,7 @@ class NetTest extends haxe.unit.TestCase
 
 	public function testRPCArguments()
 	{
-		var client = new hxnet.udp.Client();
+		var client = new hxnet.tcp.Client();
 		var rpc = new MyProtocol();
 		client.protocol = rpc;
 		client.connect(serverPort);
@@ -84,7 +83,7 @@ class NetTest extends haxe.unit.TestCase
 
 	public function testRPCFailure()
 	{
-		var client = new hxnet.udp.Client();
+		var client = new hxnet.tcp.Client();
 		var rpc = new MyProtocol();
 		client.protocol = rpc;
 		client.connect(serverPort);
@@ -102,5 +101,5 @@ class NetTest extends haxe.unit.TestCase
 		runner.run();
 	}
 
-	private var server:hxnet.udp.Server;
+	private var server:hxnet.tcp.Server;
 }

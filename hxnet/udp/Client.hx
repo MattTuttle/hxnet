@@ -32,7 +32,7 @@ class Client
 			// verify the data was received from the server and not somewhere else
 			if (remote.address == host && remote.port == port)
 			{
-				trace("yep");
+				trace(remote.port);
 				protocol.dataReceived(new BytesInput(buffer, 0, bytesReceived));
 			}
 		}
