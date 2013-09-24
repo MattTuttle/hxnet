@@ -1,0 +1,6 @@
+bin/
+obj/
+all_objs
+
+Thumbs.db
+.DS_Store

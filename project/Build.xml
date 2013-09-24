@@ -1,0 +1,54 @@
+<xml>
+
+   <set name="debug" value="debug" if ="fulldebug" />
+   <set name="debug_extra" value="-debug" if="fulldebug" />
+
+   <include name="${HXCPP}/build-tool/BuildCommon.xml"/>
+
+   <set name="HXCPP_M32" value="1" unless="HXCPP_M64" />
+
+   <set name="iphonesim" value="1" if="ios" />
+   <set name="iphoneos" value="1" if="ios" unless="simulator" />
+
+   <set name="mobile" value="1" if="iphone"/>
+   <set name="mobile" value="1" if="android"/>
+   <set name="mobile" value="1" if="webos"/>
+   <set name="mobile" value="1" if="blackberry"/>
+
+   <set name="IOS_ARCH" value="-v7" if="HXCPP_ARMV7" />
+
+   <set name="ndll-tool" value="dll" unless="iphone"/>
+   <set name="ndll-tool" value="static_link" if="iphone"/>
+   <set name="name_extra" value=".iphonesim" if="iphonesim"/>
+   <set name="name_extra" value=".iphoneos${IOS_ARCH}" if="iphoneos"/>
+
+   <set name="name_extra" value="-x86" if="simulator" unless="iphonesim" />
+   <set name="name_prefix" value="lib" if="iphone" />
+
+   <files id="common">
+      <compilerflag value="-Iinclude" />
+      <file name="common/UdpSocket.cpp" />
+      <file name="common/ExternalInterface.cpp" />
+   </files>
+
+   <files id="bonjour">
+      <compilerflag value="-Iinclude" />
+      <file name="bonjour/Bonjour.mm" />
+   </files>
+
+   <target id="NDLL" output="${name_prefix}hxnet${debug_extra}${name_extra}" tool="linker" toolid="${ndll-tool}">
+      <outdir name="../ndll/${BINDIR}" />
+      <ext value=".ndll" unless="mobile"/>
+
+      <files id="common" />
+      <files id="bonjour" if="ios" />
+      <files id="bonjour" if="macos" />
+   </target>
+
+
+   <target id="default">
+      <target id="NDLL"/>
+   </target>
+
+
+</xml>

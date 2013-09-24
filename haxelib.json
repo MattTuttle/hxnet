@@ -1,0 +1,10 @@
+{
+	"name": "hxnet",
+	"url" : "http://matttuttle.com",
+	"license": "MIT",
+	"tags": ["neko", "cpp"],
+	"description": "Haxe networking helpers",
+	"version": "1.0.0",
+	"releasenote": "Initial version",
+	"contributors": ["heardtheword"]
+}

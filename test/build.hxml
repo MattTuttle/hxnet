@@ -1,0 +1,10 @@
+# -x NetTest
+# -lib hxnet
+# -cp ..
+
+# --next
+
+-cpp bin
+-main NetTest
+-lib hxnet
+-cp ..
