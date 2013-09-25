@@ -1,7 +1,7 @@
 Haxe networking library
 =======================
 
-WARNING: The code is still in alpha status and should not be used for production use.
+WARNING: This is alpha version code and should not be used for production use.
 
 ## What is hxnet?
 

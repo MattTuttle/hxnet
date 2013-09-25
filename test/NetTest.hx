@@ -87,7 +87,7 @@ class NetTest extends haxe.unit.TestCase
 		var rpc = new MyProtocol();
 		client.protocol = rpc;
 		client.connect(serverPort);
-		rpc.call("ping", [1, 20.4, "hi"]); // this call should fail
+		rpc.call("foo", [1, 20.4, "hi"]); // this call should fail
 
 		updateClient(client);
 
