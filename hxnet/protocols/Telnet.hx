@@ -41,18 +41,27 @@ class Telnet extends BaseProtocol
 		lineReceived(buffer);
 	}
 
-	public function writeLine(data:String)
+	public function writeLine(data:String, reset:Bool=false)
 	{
-		cnx.writeBytes(Bytes.ofString(data + "\n"));
+		if (reset) data += setText(Reset); // reset to normal text
+		data += "\n";
+		cnx.writeBytes(Bytes.ofString(data));
 	}
 
 	public function setText(?foreground:Color, ?background:Color, ?attribute:Attribute):String
 	{
-		if (attribute == null) attribute = Reset;
-		var color = "\x1b[" + Type.enumIndex(attribute);
-		if (foreground != null) color += ";3" + Type.enumIndex(foreground);
-		if (background != null) color += ";4" + Type.enumIndex(background);
-		return  color + "m";
+		var commands = new Array<String>();
+		if (attribute == null && foreground == null && background == null)
+		{
+			commands.push("0"); // reset
+		}
+		else
+		{
+			if (attribute != null) commands.push(Std.string(Type.enumIndex(attribute)));
+			if (foreground != null) commands.push("3" + Type.enumIndex(foreground));
+			if (background != null) commands.push("4" + Type.enumIndex(background));
+		}
+		return  "\x1b[" + commands.join(";") + "m";
 	}
 
 	private function lineReceived(line:String) { }
