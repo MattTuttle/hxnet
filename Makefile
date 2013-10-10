@@ -13,7 +13,7 @@ ios:
 
 testing:
 	cd test && haxe build.hxml
-	test/bin/NetTest
+	# test/bin/NetTest
 
 clean:
 	rm -rf ndll

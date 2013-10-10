@@ -48,11 +48,9 @@ class NetTest extends haxe.unit.TestCase
 		serverThread.sendMessage("finish");
 	}
 
-	private inline function updateClient(client:hxnet.tcp.Client)
+	private inline function updateClient(client:hxnet.tcp.Client, times:Int=100)
 	{
-		// update the client for a bit
-		var i = 1000;
-		while (i-- > 0) client.update();
+		while (times-- > 0) client.update();
 	}
 
 	public function testRPC()
@@ -89,7 +87,7 @@ class NetTest extends haxe.unit.TestCase
 		client.connect(serverPort);
 		rpc.call("foo", [1, 20.4, "hi"]); // this call should fail
 
-		updateClient(client);
+		updateClient(client, 1000);
 
 		assertEquals(0, rpc.pingCount);
 	}

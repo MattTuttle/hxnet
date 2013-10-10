@@ -35,16 +35,12 @@ class Socket
 		loadNekoAPI();
 		#end
 		handle = hxnet_udp_new();
+		hxnet_udp_create(handle);
 	}
 
 	public function close():Bool
 	{
 		return hxnet_udp_close(handle);
-	}
-
-	public function create():Bool
-	{
-		return hxnet_udp_create(handle);
 	}
 
 	public function connect(host:String, port:Int):Bool

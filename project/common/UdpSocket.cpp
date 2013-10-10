@@ -230,6 +230,7 @@ namespace hxnet
 	{
 		if (m_hSocket != INVALID_SOCKET)
 			return false;
+
 		m_hSocket =	socket(AF_INET,	SOCK_DGRAM,	0);
 		bool success = m_hSocket !=	INVALID_SOCKET;
 		if (success)
@@ -301,15 +302,15 @@ namespace hxnet
 		return true;
 	}
 
-	bool UdpSocket::Bind(unsigned short usPort)
+	bool UdpSocket::Bind(unsigned short port)
 	{
 		saServer.sin_family	= AF_INET;
 		saServer.sin_addr.s_addr = INADDR_ANY;
 		//Port MUST	be in Network Byte Order
-		saServer.sin_port =	htons(usPort);
+		saServer.sin_port =	htons(port);
 
-		int	ret	= bind(m_hSocket,(struct sockaddr*)&saServer,sizeof(struct sockaddr));
-		if(ret==-1)  ofxNetworkCheckError();
+		int	ret	= bind(m_hSocket, (struct sockaddr*)&saServer, sizeof(struct sockaddr));
+		if (ret == -1)  ofxNetworkCheckError();
 
 		return (ret	== 0);
 	}
@@ -585,24 +586,27 @@ namespace hxnet
 	 */
 	bool UdpSocket::SetNonBlocking(bool useNonBlocking)
 	{
+		if (m_hSocket == INVALID_SOCKET) return false;
 		nonBlocking		= useNonBlocking;
 
 		#ifdef TARGET_WIN32
 			unsigned long arg = nonBlocking;
 			int retVal = ioctlsocket(m_hSocket,FIONBIO,&arg);
 		#else
-			int arg			= nonBlocking;
-			int retVal = ioctl(m_hSocket,FIONBIO,&arg);
+			// int arg			= nonBlocking;
+			// int retVal = ioctl(m_hSocket,FIONBIO,&arg);
+			int flags = fcntl(m_hSocket, F_GETFL, 0);
+			int retVal = fcntl(m_hSocket, F_SETFL, flags | O_NONBLOCK);
 		#endif
 
-		bool ret=(retVal >= 0);
-		if(!ret) ofxNetworkCheckError();
+		bool ret = (retVal >= 0);
+		if (!ret) ofxNetworkCheckError();
 		return ret;
 	}
 
 	int  UdpSocket::GetMaxMsgSize()
 	{
-		if (m_hSocket == INVALID_SOCKET) return(false);
+		if (m_hSocket == INVALID_SOCKET) return false;
 
 		int	sizeBuffer=0;
 

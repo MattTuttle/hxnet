@@ -12,7 +12,6 @@ class Client
 	{
 		buffer = Bytes.alloc(512);
 		client = new Socket();
-		client.create();
 	}
 
 	public function connect(hostname:String = "127.0.0.1", port:Int = 12800)
@@ -28,13 +27,8 @@ class Client
 		var bytesReceived = client.receive(buffer);
 		if (bytesReceived > 0)
 		{
-			var remote = client.remoteAddress;
-			// verify the data was received from the server and not somewhere else
-			if (remote.address == host && remote.port == port)
-			{
-				trace(remote.port);
-				protocol.dataReceived(new BytesInput(buffer, 0, bytesReceived));
-			}
+			protocol.dataReceived(new BytesInput(buffer, 0, bytesReceived));
+			trace("byte");
 		}
 	}
 
