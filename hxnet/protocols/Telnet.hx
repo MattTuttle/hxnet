@@ -34,6 +34,14 @@ class Telnet extends BaseProtocol
 	public override function dataReceived(input:Input)
 	{
 		var buffer = input.readLine();
+
+		if (promptCallback != null)
+		{
+			promptCallback(buffer);
+			promptCallback = null;
+			return;
+		}
+
 		if (buffer == "exit")
 		{
 			cnx.close();
@@ -43,12 +51,18 @@ class Telnet extends BaseProtocol
 
 	public function writeLine(data:String, reset:Bool=false)
 	{
-		if (reset) data += setText(Reset); // reset to normal text
+		if (reset) data += text(Reset); // reset to normal text
 		data += "\n";
 		cnx.writeBytes(Bytes.ofString(data));
 	}
 
-	public function setText(?foreground:Color, ?background:Color, ?attribute:Attribute):String
+	public function prompt(prompt:String, callback:String->Void)
+	{
+		cnx.writeBytes(Bytes.ofString(prompt + " "));
+		promptCallback = callback;
+	}
+
+	public function text(?foreground:Color, ?background:Color, ?attribute:Attribute):String
 	{
 		var commands = new Array<String>();
 		if (attribute == null && foreground == null && background == null)
@@ -64,5 +78,6 @@ class Telnet extends BaseProtocol
 		return  "\x1b[" + commands.join(";") + "m";
 	}
 
+	private var promptCallback:String->Void;
 	private function lineReceived(line:String) { }
 }
