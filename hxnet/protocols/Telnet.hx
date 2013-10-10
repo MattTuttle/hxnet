@@ -1,6 +1,7 @@
 package hxnet.protocols;
 
 import haxe.io.Input;
+import haxe.io.Bytes;
 
 enum Color
 {
@@ -38,6 +39,11 @@ class Telnet extends BaseProtocol
 			cnx.close();
 		}
 		lineReceived(buffer);
+	}
+
+	public function writeLine(data:String)
+	{
+		cnx.writeBytes(Bytes.ofString(data + "\n"));
 	}
 
 	public function setText(?foreground:Color, ?background:Color, ?attribute:Attribute):String
