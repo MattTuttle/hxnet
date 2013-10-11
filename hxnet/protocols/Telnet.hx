@@ -37,10 +37,18 @@ class Telnet extends BaseProtocol
 
 		if (promptCallback != null)
 		{
-			if (promptCallback(buffer))
-				promptCallback = null;
+			// save current callback for comparison
+			var callback = promptCallback;
+			if (callback(buffer))
+			{
+				// don't set to null if a different prompt has been set
+				if (promptCallback == callback)
+					promptCallback = null;
+			}
 			else
+			{
 				cnx.writeBytes(promptBytes);
+			}
 			return;
 		}
 
@@ -61,8 +69,8 @@ class Telnet extends BaseProtocol
 	public function prompt(prompt:String, callback:String->Bool)
 	{
 		promptBytes = Bytes.ofString(prompt + " ");
-		cnx.writeBytes(promptBytes);
 		promptCallback = callback;
+		cnx.writeBytes(promptBytes);
 	}
 
 	public function text(?foreground:Color, ?background:Color, ?attribute:Attribute):String
