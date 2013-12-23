@@ -11,36 +11,37 @@ class RPC extends BaseProtocol
 	{
 		try
 		{
-			var func = readString(input);
-			var numArgs = input.readInt16();
-			var arguments = new Array<Dynamic>();
-			for (i in 0...numArgs)
+			while (true)
 			{
-				switch(input.readInt8())
+				var func = readString(input);
+				var numArgs = input.readInt16();
+				var arguments = new Array<Dynamic>();
+				for (i in 0...numArgs)
 				{
-					case TYPE_INT:
-						arguments.push(input.readInt32());
-					case TYPE_FLOAT:
-						arguments.push(input.readFloat());
-					case TYPE_BOOL:
-						arguments.push(input.readInt8() == 1 ? true : false);
-					case TYPE_STRING:
-						arguments.push(readString(input));
-					case TYPE_OBJECT:
-						arguments.push(haxe.Unserializer.run(readString(input)));
+					switch(input.readInt8())
+					{
+						case TYPE_INT:
+							arguments.push(input.readInt32());
+						case TYPE_FLOAT:
+							arguments.push(input.readFloat());
+						case TYPE_BOOL:
+							arguments.push(input.readInt8() == 1 ? true : false);
+						case TYPE_STRING:
+							arguments.push(readString(input));
+						case TYPE_OBJECT:
+							arguments.push(haxe.Unserializer.run(readString(input)));
+					}
 				}
-			}
-			var rpcCall = Reflect.field(this, func);
-			if (rpcCall != null)
-			{
-				Reflect.callMethod(this, rpcCall, arguments);
+				var rpcCall = Reflect.field(this, func);
+				if (rpcCall != null)
+				{
+					Reflect.callMethod(this, rpcCall, arguments);
+				}
 			}
 		}
 		catch (e:Eof)
 		{
-			#if debug
-			trace("Invalid RPC data received");
-			#end
+			// not an error, just end of data
 		}
 		catch (e:Dynamic)
 		{
