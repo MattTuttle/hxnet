@@ -13,10 +13,13 @@ import cpp.Lib;
 class RPC extends BaseProtocol
 {
 
+	public var dispatcher:Dynamic;
+
 	public override function dataReceived(input:Input)
 	{
 		try
 		{
+			if (dispatcher == null) dispatcher = this;
 			while (true)
 			{
 				var func = readString(input);
@@ -38,10 +41,10 @@ class RPC extends BaseProtocol
 							arguments.push(haxe.Unserializer.run(readString(input)));
 					}
 				}
-				var rpcCall = Reflect.field(this, func);
+				var rpcCall = Reflect.field(dispatcher, func);
 				if (rpcCall != null)
 				{
-					Reflect.callMethod(this, rpcCall, arguments);
+					Reflect.callMethod(dispatcher, rpcCall, arguments);
 				}
 			}
 		}
