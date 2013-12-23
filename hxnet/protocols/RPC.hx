@@ -4,6 +4,12 @@ import haxe.io.BytesOutput;
 import haxe.io.Input;
 import haxe.io.Eof;
 
+#if neko
+import neko.Lib;
+#elseif cpp
+import cpp.Lib;
+#end
+
 class RPC extends BaseProtocol
 {
 
@@ -47,7 +53,9 @@ class RPC extends BaseProtocol
 		{
 			// most likely an invalid call was made
 			#if debug
-			trace("RPC Error: " + e);
+			Lib.print(e);
+			Lib.print(haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
+			Lib.print("\n");
 			#end
 		}
 	}
