@@ -4,32 +4,6 @@ import haxe.io.Input;
 import haxe.io.Bytes;
 import haxe.io.BytesOutput;
 
-enum Color
-{
-	Black;
-	Red;
-	Green;
-	Yellow;
-	Blue;
-	Magenta;
-	Cyan;
-	White;
-}
-
-enum Attribute
-{
-	Reset;        // normal
-	Bold;
-	Faint;        // not widely supported
-	Italic;       // not widely supported
-	Underline;
-	Blink;
-	BlinkRapid;   // not widely supported
-	Negative;
-	Conceal;      // not widely supported
-	CrossedOut;   // not widely supported
-}
-
 class Telnet extends BaseProtocol
 {
 	public override function dataReceived(input:Input)
@@ -63,9 +37,8 @@ class Telnet extends BaseProtocol
 		lineReceived(buffer);
 	}
 
-	public function writeLine(data:String, reset:Bool=false)
+	public function writeLine(data:String)
 	{
-		if (reset) data += text(Reset); // reset to normal text
 		data += "\r\n";
 		cnx.writeBytes(Bytes.ofString(data));
 	}
@@ -86,22 +59,6 @@ class Telnet extends BaseProtocol
 		promptBytes = Bytes.ofString(prompt + " ");
 		promptCallback = callback;
 		cnx.writeBytes(promptBytes);
-	}
-
-	public function text(?foreground:Color, ?background:Color, ?attribute:Attribute):String
-	{
-		var commands = new Array<String>();
-		if (attribute == null && foreground == null && background == null)
-		{
-			commands.push("0"); // reset
-		}
-		else
-		{
-			if (attribute != null) commands.push(Std.string(Type.enumIndex(attribute)));
-			if (foreground != null) commands.push("3" + Type.enumIndex(foreground));
-			if (background != null) commands.push("4" + Type.enumIndex(background));
-		}
-		return  "\x1b[" + commands.join(";") + "m";
 	}
 
 	private var promptBytes:Bytes;
