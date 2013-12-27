@@ -16,10 +16,11 @@ class Client implements hxnet.interfaces.IClient
 		bytes = Bytes.alloc(1024);
 	}
 
-	public function connect(hostname:String = "127.0.0.1", port:Null<Int> = 12800)
+	public function connect(?hostname:String, port:Null<Int> = 12800)
 	{
 		try
 		{
+			if (hostname == null) hostname = Host.localhost();
 			#if flash
 			client.connect(hostname, port);
 			#else
