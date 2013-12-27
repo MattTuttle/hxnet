@@ -52,7 +52,7 @@ class Bonjour
 		this.type = type;
 		this.name = name;
 		_listeners = new Map<String, Array<BonjourCallback>>();
-		hxnet_bonjour_set_callback(bonjour_callback);
+		hxnet_bonjour_callback(bonjour_callback);
 	}
 
 	public function publish(port:Int)
@@ -123,7 +123,7 @@ class Bonjour
 	private var _handle:Dynamic = null;
 	private var _listeners:Map<String, Array<BonjourCallback>>;
 
-	private static var hxnet_bonjour_set_callback = Lib.load("hxnet", "hxnet_bonjour_set_callback", 1);
+	private static var hxnet_bonjour_callback = Lib.load("hxnet", "hxnet_bonjour_callback", 1);
 	private static var hxnet_resolve_bonjour_service = Lib.load("hxnet", "hxnet_resolve_bonjour_service", 4);
 	private static var hxnet_publish_bonjour_service = Lib.load("hxnet", "hxnet_publish_bonjour_service", 4);
 	private static var hxnet_bonjour_stop = Lib.load("hxnet", "hxnet_bonjour_stop", 1);

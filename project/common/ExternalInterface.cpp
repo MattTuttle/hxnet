@@ -21,8 +21,8 @@
 using namespace hxnet;
 
 // neko types
-vkind kBonjourHandle;
-vkind kUdpSocket;
+DEFINE_KIND(kBonjourHandle);
+DEFINE_KIND(kUdpSocket);
 int _id_type,
 	_id_service,
 	_id_port,
@@ -89,7 +89,7 @@ void cleanupHandle(value handle)
 	}
 }
 
-static value hxnet_bonjour_callback(value callback)
+static void hxnet_bonjour_callback(value callback)
 {
 	if (val_is_null(callback))
 	{
@@ -103,9 +103,8 @@ static value hxnet_bonjour_callback(value callback)
 	{
 		bonjourCallback = new AutoGCRoot(callback);
 	}
-	return alloc_null();
+	// return alloc_null();
 }
-DEFINE_PRIM(hxnet_bonjour_callback, 1);
 
 static value hxnet_publish_bonjour_service(value domain, value type, value name, value port)
 {
@@ -128,7 +127,6 @@ static value hxnet_publish_bonjour_service(value domain, value type, value name,
 	}
 	return alloc_null();
 }
-DEFINE_PRIM(hxnet_publish_bonjour_service, 4);
 
 
 static value hxnet_resolve_bonjour_service(value domain, value type, value name, value timeout)
@@ -149,7 +147,6 @@ static value hxnet_resolve_bonjour_service(value domain, value type, value name,
 	}
 	return alloc_null();
 }
-DEFINE_PRIM(hxnet_resolve_bonjour_service, 4);
 
 
 static value hxnet_bonjour_stop(value handle)
@@ -161,6 +158,10 @@ static value hxnet_bonjour_stop(value handle)
 	}
 	return alloc_null();
 }
+
+DEFINE_PRIM(hxnet_bonjour_callback, 1);
+DEFINE_PRIM(hxnet_publish_bonjour_service, 4);
+DEFINE_PRIM(hxnet_resolve_bonjour_service, 4);
 DEFINE_PRIM(hxnet_bonjour_stop, 1);
 
 
@@ -178,87 +179,73 @@ static value hxnet_udp_new() {
 	val_gc(handle, delete_UdpSocket);
 	return handle;
 }
-DEFINE_PRIM(hxnet_udp_new, 0);
 
 static value hxnet_udp_close(value a) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
 	return alloc_bool(s ? s->Close() : false);
 }
-DEFINE_PRIM(hxnet_udp_close, 1);
 
 static value hxnet_udp_create(value a) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
 	return alloc_bool(s ? s->Create() : false);
 }
-DEFINE_PRIM(hxnet_udp_create, 1);
 
 static value hxnet_udp_connect(value a, value b, value c) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
 	return alloc_bool(s ? s->Connect(val_string(b), val_int(c)) : false);
 }
-DEFINE_PRIM(hxnet_udp_connect, 3);
 
 static value hxnet_udp_connectmcast(value a, value b, value c) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
 	return alloc_bool(s ? s->ConnectMcast(val_string(b), val_int(c)) : false);
 }
-DEFINE_PRIM(hxnet_udp_connectmcast, 3);
 
 static value hxnet_udp_bind(value a, value b) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
 	return alloc_bool(s ? s->Bind(val_int(b)) : false);
 }
-DEFINE_PRIM(hxnet_udp_bind, 2);
 
 static value hxnet_udp_bindmcast(value a, value b, value c) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
 	return alloc_bool(s ? s->BindMcast(val_string(b), val_int(c)) : false);
 }
-DEFINE_PRIM(hxnet_udp_bindmcast, 3);
 
 static value hxnet_udp_send(value a, value b, value c) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
 	return alloc_int(s ? s->Send(buffer_data(val_to_buffer(b)), val_int(c)) : 0);
 }
-DEFINE_PRIM(hxnet_udp_send, 3);
 
 static value hxnet_udp_sendall(value a, value b, value c) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
 	return alloc_int(s ? s->SendAll(buffer_data(val_to_buffer(b)), val_int(c)) : 0);
 }
-DEFINE_PRIM(hxnet_udp_sendall, 3);
 
 static value hxnet_udp_receive(value a, value b, value c) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
 	return alloc_int(s ? s->Receive(buffer_data(val_to_buffer(b)), val_int(c)) : 0);
 }
-DEFINE_PRIM(hxnet_udp_receive, 3);
 
 static value hxnet_udp_settimeoutsend(value a, value b) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
 	s->SetTimeoutSend(val_int(b));
 	return alloc_null();
 }
-DEFINE_PRIM(hxnet_udp_settimeoutsend, 2);
 
 static value hxnet_udp_settimeoutreceive(value a, value b) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
 	s->SetTimeoutReceive(val_int(b));
 	return alloc_null();
 }
-DEFINE_PRIM(hxnet_udp_settimeoutreceive, 2);
 
 static value hxnet_udp_gettimeoutsend(value a) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
 	return alloc_int(s ? s->GetTimeoutSend() : 0);
 }
-DEFINE_PRIM(hxnet_udp_gettimeoutsend, 1);
 
 static value hxnet_udp_gettimeoutreceive(value a) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
 	return alloc_int(s ? s->GetTimeoutReceive() : 0);
 }
-DEFINE_PRIM(hxnet_udp_gettimeoutreceive, 1);
 
 static value hxnet_udp_getremoteaddr(value a) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
@@ -271,66 +258,81 @@ static value hxnet_udp_getremoteaddr(value a) {
 	delete[] address;
 	return o;
 }
-DEFINE_PRIM(hxnet_udp_getremoteaddr, 1);
 
 static value hxnet_udp_setreceivebuffersize(value a, value b) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
 	return alloc_int(s ? s->SetReceiveBufferSize(val_int(b)) : 0);
 }
-DEFINE_PRIM(hxnet_udp_setreceivebuffersize, 2);
 
 static value hxnet_udp_setsendbuffersize(value a, value b) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
 	return alloc_int(s ? s->SetSendBufferSize(val_int(b)) : 0);
 }
-DEFINE_PRIM(hxnet_udp_setsendbuffersize, 2);
 
 static value hxnet_udp_getreceivebuffersize(value a) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
 	return alloc_int(s ? s->GetReceiveBufferSize() : 0);
 }
-DEFINE_PRIM(hxnet_udp_getreceivebuffersize, 1);
 
 static value hxnet_udp_getsendbuffersize(value a) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
 	return alloc_int(s ? s->GetSendBufferSize() : 0);
 }
-DEFINE_PRIM(hxnet_udp_getsendbuffersize, 1);
 
 static value hxnet_udp_setreuseaddress(value a, value b) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
 	return alloc_bool(s ? s->SetReuseAddress(val_bool(b)) : false);
 }
-DEFINE_PRIM(hxnet_udp_setreuseaddress, 2);
 
 static value hxnet_udp_setenablebroadcast(value a, value b) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
 	return alloc_bool(s ? s->SetEnableBroadcast(val_bool(b)) : false);
 }
-DEFINE_PRIM(hxnet_udp_setenablebroadcast, 2);
 
 static value hxnet_udp_setnonblocking(value a, value b) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
 	return alloc_bool(s ? s->SetNonBlocking(val_bool(b)) : false);
 }
-DEFINE_PRIM(hxnet_udp_setnonblocking, 2);
 
 static value hxnet_udp_getmaxmsgsize(value a) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
 	return alloc_int(s ? s->GetMaxMsgSize() : 0);
 }
-DEFINE_PRIM(hxnet_udp_getmaxmsgsize, 1);
 
 static value hxnet_udp_getttl(value a) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
 	return alloc_int(s ? s->GetTTL() : 0);
 }
-DEFINE_PRIM(hxnet_udp_getttl, 1);
 
 static value hxnet_udp_setttl(value a, value b) {
 	UdpSocket* s = (UdpSocket*) objectFromAbstract(a, kUdpSocket);
 	return alloc_int(s ? s->SetTTL(val_int(b)) : 0);
 }
+
+DEFINE_PRIM(hxnet_udp_new, 0);
+DEFINE_PRIM(hxnet_udp_close, 1);
+DEFINE_PRIM(hxnet_udp_create, 1);
+DEFINE_PRIM(hxnet_udp_connect, 3);
+DEFINE_PRIM(hxnet_udp_connectmcast, 3);
+DEFINE_PRIM(hxnet_udp_bind, 2);
+DEFINE_PRIM(hxnet_udp_bindmcast, 3);
+DEFINE_PRIM(hxnet_udp_send, 3);
+DEFINE_PRIM(hxnet_udp_sendall, 3);
+DEFINE_PRIM(hxnet_udp_receive, 3);
+DEFINE_PRIM(hxnet_udp_settimeoutsend, 2);
+DEFINE_PRIM(hxnet_udp_settimeoutreceive, 2);
+DEFINE_PRIM(hxnet_udp_gettimeoutsend, 1);
+DEFINE_PRIM(hxnet_udp_gettimeoutreceive, 1);
+DEFINE_PRIM(hxnet_udp_getremoteaddr, 1);
+DEFINE_PRIM(hxnet_udp_setreceivebuffersize, 2);
+DEFINE_PRIM(hxnet_udp_setsendbuffersize, 2);
+DEFINE_PRIM(hxnet_udp_getreceivebuffersize, 1);
+DEFINE_PRIM(hxnet_udp_getsendbuffersize, 1);
+DEFINE_PRIM(hxnet_udp_setreuseaddress, 2);
+DEFINE_PRIM(hxnet_udp_setenablebroadcast, 2);
+DEFINE_PRIM(hxnet_udp_setnonblocking, 2);
+DEFINE_PRIM(hxnet_udp_getmaxmsgsize, 1);
+DEFINE_PRIM(hxnet_udp_getttl, 1);
 DEFINE_PRIM(hxnet_udp_setttl, 2);
 
 // ----------------------------------------------------------------------------
@@ -348,8 +350,8 @@ void hxnet_main() {
     _id_ip        = val_id("ip");
     _id_ipv6      = val_id("ipv6");
 
-	kBonjourHandle = alloc_kind();
-	kUdpSocket = alloc_kind();
+	kind_share(&kBonjourHandle, "bonjour");
+	kind_share(&kUdpSocket, "udp");
 }
 DEFINE_ENTRY_POINT(hxnet_main);
 
