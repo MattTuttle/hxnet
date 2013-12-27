@@ -4,7 +4,7 @@ import hxnet.udp.Socket;
 import haxe.io.Bytes;
 import haxe.io.BytesInput;
 
-class Client
+class Client implements hxnet.interfaces.IClient
 {
 	public var protocol(default, set):Protocol;
 
@@ -30,6 +30,12 @@ class Client
 			protocol.dataReceived(new BytesInput(buffer, 0, bytesReceived));
 			trace("byte");
 		}
+	}
+
+	public function close()
+	{
+		client.close();
+		protocol.loseConnection();
 	}
 
 	private function set_protocol(value:Protocol):Protocol

@@ -5,7 +5,7 @@ import sys.net.Socket;
 import haxe.io.Bytes;
 import haxe.io.BytesInput;
 
-class Client
+class Client implements hxnet.interfaces.IClient
 {
 
 	public var protocol(default, set):Protocol;

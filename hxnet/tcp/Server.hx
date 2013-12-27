@@ -5,7 +5,7 @@ import sys.net.Socket;
 import haxe.io.Bytes;
 import haxe.io.BytesInput;
 
-class Server
+class Server implements hxnet.interfaces.IServer
 {
 
 	public function new(protocol:Class<Protocol>, port:Int, hostname:String = "127.0.0.1")
@@ -69,6 +69,11 @@ class Server
 				}
 			}
 		}
+	}
+
+	public function close()
+	{
+		listener.close();
 	}
 
 	private var protocolClass:Class<Protocol>;

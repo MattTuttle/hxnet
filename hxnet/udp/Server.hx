@@ -10,7 +10,7 @@ typedef ClientConnection = {
 	var protocol:Protocol;
 }
 
-class Server
+class Server implements hxnet.interfaces.IServer
 {
 
 	public function new(protocol:Class<Protocol>, port:Int, hostname:String = "127.0.0.1")
@@ -66,6 +66,11 @@ class Server
 			cnx.timeout = 10;
 			cnx.protocol.dataReceived(input);
 		}
+	}
+
+	public function close()
+	{
+		listener.close();
 	}
 
 	private var lastUpdate:Float;
