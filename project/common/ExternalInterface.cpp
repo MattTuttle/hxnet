@@ -36,10 +36,10 @@ int _id_type,
 #define FIELD_IF_EXIST(O,N,T) if (service->N) \
 	alloc_field(O, val_id(#N), alloc_ ## T(service->N))
 
-void network_callback(void *userData, const char *type, BonjourService *service)
+AutoGCRoot *bonjourCallback = 0;
+void network_callback(const char *type, BonjourService *service)
 {
-	AutoGCRoot *root = (AutoGCRoot *)userData;
-	if (!root) return;
+	if (!bonjourCallback) return;
 
 	value s = alloc_empty_object();
 	FIELD_IF_EXIST(s, name, string);
@@ -67,7 +67,7 @@ void network_callback(void *userData, const char *type, BonjourService *service)
 	alloc_field(o, _id_type, alloc_string(type));
 	alloc_field(o, _id_service, s);
 
-	val_call1(root->get(), o);
+	val_call1(bonjourCallback->get(), o);
 }
 
 void *objectFromAbstract(value handle, vkind kind)
@@ -89,17 +89,33 @@ void cleanupHandle(value handle)
 	}
 }
 
-
-value hxnet_publish_bonjour_service(value domain, value type, value name, value port, value callback)
+value hxnet_bonjour_callback(value callback)
 {
-	AutoGCRoot *eventHandle = new AutoGCRoot(callback);
+	if (val_is_null(callback))
+	{
+		if (bonjourCallback)
+		{
+			delete bonjourCallback;
+			bonjourCallback = 0;
+		}
+	}
+	else
+	{
+		bonjourCallback = new AutoGCRoot(callback);
+	}
+	return alloc_null();
+}
+DEFINE_PRIM(hxnet_bonjour_callback, 1);
+
+value hxnet_publish_bonjour_service(value domain, value type, value name, value port)
+{
 	BonjourService *service = new BonjourService();
 	service->domain = val_string(domain);
 	service->type = val_string(type);
 	service->name = val_string(name);
 	service->port = val_int(port);
 
-	void *bonjourHandle = createBonjourService(service, network_callback, (void *)eventHandle);
+	void *bonjourHandle = createBonjourService(service, network_callback);
 	delete service;
 
 	if (bonjourHandle)
@@ -112,18 +128,17 @@ value hxnet_publish_bonjour_service(value domain, value type, value name, value 
 	}
 	return alloc_null();
 }
-DEFINE_PRIM(hxnet_publish_bonjour_service, 5);
+DEFINE_PRIM(hxnet_publish_bonjour_service, 4);
 
 
-value hxnet_resolve_bonjour_service(value domain, value type, value name, value timeout, value callback)
+value hxnet_resolve_bonjour_service(value domain, value type, value name, value timeout)
 {
-	AutoGCRoot *eventHandle = new AutoGCRoot(callback);
 	BonjourService *service = new BonjourService();
 	service->domain = val_string(domain);
 	service->type = val_string(type);
 	service->name = val_string(name);
 
-	void *bonjourHandle = createBonjourService(service, network_callback, (void *)eventHandle);
+	void *bonjourHandle = createBonjourService(service, network_callback);
 	if (bonjourHandle)
 	{
 		resolveBonjourService(bonjourHandle, val_is_float(timeout) ? val_float(timeout) : val_int(timeout));
@@ -134,7 +149,7 @@ value hxnet_resolve_bonjour_service(value domain, value type, value name, value 
 	}
 	return alloc_null();
 }
-DEFINE_PRIM(hxnet_resolve_bonjour_service, 5);
+DEFINE_PRIM(hxnet_resolve_bonjour_service, 4);
 
 
 void hxnet_bonjour_stop(value handle)

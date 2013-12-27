@@ -61,18 +61,16 @@ void free_service(BonjourService *service)
 
 @interface Bonjour : NSObject <NSNetServiceDelegate, NSStreamDelegate> {
 	BonjourCallback _callback;
-	void *_data;
 }
 
 @end
 
 @implementation Bonjour
 
-- (id)initWithCallback:(BonjourCallback)callback data:(void *)data {
+- (id)initWithCallback:(BonjourCallback)callback {
 	if (self = [super init])
 	{
 		_callback = callback;
-		_data = data;
 	}
 	return self;
 }
@@ -81,7 +79,7 @@ void free_service(BonjourService *service)
 	if (_callback)
 	{
 		BonjourService *service = create_service(sender);
-		_callback(_data, [type UTF8String], service);
+		_callback([type UTF8String], service);
 		free_service(service);
 	}
 }
@@ -118,14 +116,14 @@ void free_service(BonjourService *service)
 namespace hxnet
 {
 
-	void *createBonjourService(BonjourService *service, BonjourCallback callback, void *userData)
+	void *createBonjourService(BonjourService *service, BonjourCallback callback)
 	{
 		NSString *nsDomain = [NSString stringWithUTF8String:service->domain];
 		NSString *nsType = [NSString stringWithUTF8String:service->type];
 		NSString *nsName = [NSString stringWithUTF8String:service->name];
 		NSNetService *ns = [[NSNetService alloc] initWithDomain:nsDomain type:nsType name:nsName port:service->port];
 
-		Bonjour *delegate = [[Bonjour alloc] initWithCallback:callback data:userData];
+		Bonjour *delegate = [[Bonjour alloc] initWithCallback:callback];
 		[ns setDelegate:delegate];
 
 		return ns;

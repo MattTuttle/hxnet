@@ -20,9 +20,9 @@ namespace hxnet
 		int port;
 	} BonjourService;
 
-	typedef void (*BonjourCallback)(void *userData, const char *type, BonjourService *service);
+	typedef void (*BonjourCallback)(const char *type, BonjourService *service);
 
-	void *createBonjourService(BonjourService *service, BonjourCallback callback, void *userData);
+	void *createBonjourService(BonjourService *service, BonjourCallback callback);
 	void publishBonjourService(void *handle);
 	void resolveBonjourService(void *handle, float timeout);
 	void stopBonjourService(void *bonjourHandle);

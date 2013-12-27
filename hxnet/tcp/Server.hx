@@ -8,14 +8,20 @@ import haxe.io.BytesInput;
 class Server implements hxnet.interfaces.IServer
 {
 
-	public function new(protocol:Class<Protocol>, port:Int, hostname:String = "127.0.0.1")
+	public var host(default, null):String;
+	public var port(default, null):Int;
+
+	public function new(protocol:Class<Protocol>, port:Int, ?hostname:String)
 	{
 		protocolClass = protocol;
 
 		bytes = Bytes.alloc(1024);
 
+		this.host = (hostname == null ? Host.localhost() : hostname);
+		this.port = port;
+
 		listener = new Socket();
-		listener.bind(new Host(hostname), port);
+		listener.bind(new Host(host), port);
 		listener.listen(1);
 		listener.setBlocking(false);
 

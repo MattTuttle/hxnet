@@ -1,6 +1,6 @@
 package hxnet;
 
-#if (neko || cpp)
+#if (mac || ios)
 
 #if neko
 import neko.Lib;
@@ -52,26 +52,20 @@ class Bonjour
 		this.type = type;
 		this.name = name;
 		_listeners = new Map<String, Array<BonjourCallback>>();
+		// trace(hxnet_bonjour_callback);
+		hxnet_bonjour_callback(bonjour_callback);
 	}
 
 	public function publish(port:Int)
 	{
 		stop();
-		_handle = hxnet_publish_bonjour_service(domain, type, name, port, bonjour_callback);
+		_handle = hxnet_publish_bonjour_service(domain, type, name, port);
 	}
 
 	public function resolve(timeout:Float = 0.0)
 	{
 		stop();
-		_handle = hxnet_resolve_bonjour_service(domain, type, name, timeout, bonjour_callback);
-	}
-
-	private function bonjour_callback(e:BonjourCallbackData)
-	{
-		#if neko
-		e = neko.Lib.nekoToHaxe(e);
-		#end
-		dispatchEvent(e.type, e.service);
+		_handle = hxnet_resolve_bonjour_service(domain, type, name, timeout);
 	}
 
 	public function stop()
@@ -119,12 +113,21 @@ class Bonjour
 		}
 	}
 
+	private function bonjour_callback(e:BonjourCallbackData)
+	{
+		#if neko
+		e = neko.Lib.nekoToHaxe(e);
+		#end
+		dispatchEvent(e.type, e.service);
+	}
+
 	private var _handle:Dynamic = null;
 	private var _listeners:Map<String, Array<BonjourCallback>>;
 
-	private static var hxnet_resolve_bonjour_service = Lib.load("hxnet", "hxnet_resolve_bonjour_service", 5);
-	private static var hxnet_publish_bonjour_service = Lib.load("hxnet", "hxnet_publish_bonjour_service", 5);
+	private static var hxnet_resolve_bonjour_service = Lib.load("hxnet", "hxnet_resolve_bonjour_service", 4);
+	private static var hxnet_publish_bonjour_service = Lib.load("hxnet", "hxnet_publish_bonjour_service", 4);
 	private static var hxnet_bonjour_stop = Lib.load("hxnet", "hxnet_bonjour_stop", 1);
+	private static var hxnet_bonjour_callback = Lib.load("hxnet", "hxnet_bonjour_callback", 1);
 
 }
 

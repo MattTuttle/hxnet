@@ -14,7 +14,7 @@ class Client implements hxnet.interfaces.IClient
 		client = new Socket();
 	}
 
-	public function connect(hostname:String = "127.0.0.1", port:Int = 12800)
+	public function connect(hostname:String = "127.0.0.1", port:Null<Int> = 12800)
 	{
 		client.connect(hostname, port);
 		client.nonBlocking = true;
