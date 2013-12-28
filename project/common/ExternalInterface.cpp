@@ -30,13 +30,23 @@ int _id_type,
 	_id_addresses,
 	_id_ip,
 	_id_ipv6;
-AutoGCRoot *bonjourCallback = 0;
 
 
 // TODO: improve this to not use val_id?
 #define FIELD_IF_EXIST(O,N,T) if (service->N) \
 	alloc_field(O, val_id(#N), alloc_ ## T(service->N))
 
+void *objectFromAbstract(value handle, vkind kind)
+{
+	if (val_is_kind(handle, kind))
+	{
+		return val_to_kind(handle, kind);
+	}
+	return 0;
+}
+
+#if __APPLE__
+AutoGCRoot *bonjourCallback = 0;
 void network_callback(const char *type, BonjourService *service)
 {
 	if (!bonjourCallback) return;
@@ -70,16 +80,7 @@ void network_callback(const char *type, BonjourService *service)
 	val_call1(bonjourCallback->get(), o);
 }
 
-void *objectFromAbstract(value handle, vkind kind)
-{
-	if (val_is_kind(handle, kind))
-	{
-		return val_to_kind(handle, kind);
-	}
-	return 0;
-}
-
-void cleanupHandle(value handle)
+void cleanupBonjourHandle(value handle)
 {
 	void *bonjourHandle = objectFromAbstract(handle, kBonjourHandle);
 	if (bonjourHandle)
@@ -122,7 +123,7 @@ static value hxnet_publish_bonjour_service(value domain, value type, value name,
 		publishBonjourService(bonjourHandle);
 
 		value handle = alloc_abstract(kBonjourHandle, bonjourHandle);
-		val_gc(handle, cleanupHandle);
+		val_gc(handle, cleanupBonjourHandle);
 		return handle;
 	}
 	return alloc_null();
@@ -142,7 +143,7 @@ static value hxnet_resolve_bonjour_service(value domain, value type, value name,
 		resolveBonjourService(bonjourHandle, val_is_float(timeout) ? val_float(timeout) : val_int(timeout));
 
 		value handle = alloc_abstract(kBonjourHandle, bonjourHandle);
-		val_gc(handle, cleanupHandle);
+		val_gc(handle, cleanupBonjourHandle);
 		return handle;
 	}
 	return alloc_null();
@@ -164,6 +165,7 @@ DEFINE_PRIM(hxnet_publish_bonjour_service, 4);
 DEFINE_PRIM(hxnet_resolve_bonjour_service, 4);
 DEFINE_PRIM(hxnet_bonjour_stop, 1);
 
+#endif // __APPLE__
 
 // ----------------------------------------------------------------------------
 // UDP functions

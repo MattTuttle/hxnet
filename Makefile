@@ -1,6 +1,6 @@
 HXCPP=haxelib run hxlibc
 
-all: lib ios testing
+all: lib ios android testing
 
 lib:
 	cd project && $(HXCPP) Build.xml
@@ -15,6 +15,10 @@ ios:
 	cd project && $(HXCPP) Build.xml -Dios -Dsimulator -Ddebug
 	cd project && $(HXCPP) Build.xml -Dios -DHXCPP_ARMV7
 	cd project && $(HXCPP) Build.xml -Dios -DHXCPP_ARMV7 -Ddebug
+
+android:
+	cd project && $(HXCPP) Build.xml -Dandroid
+	cd project && $(HXCPP) Build.xml -Dandroid -Ddebug
 
 testing:
 	cd test && haxe build.hxml

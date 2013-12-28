@@ -25,9 +25,15 @@
 
    <files id="common">
       <compilerflag value="-Iinclude" />
+      <compilerflag value="-Iandroid" if="android" />
       <file name="common/UdpSocket.cpp" />
       <file name="common/ExternalInterface.cpp" />
       <compilerflag value="-stdlib=libc++" if="HXCPP_ARMV7" />
+   </files>
+
+   <files id="android">
+      <compilerflag value="-Iandroid" />
+      <file name="android/ifaddrs.c" />
    </files>
 
    <files id="bonjour">
@@ -41,6 +47,7 @@
       <ext value=".ndll" unless="mobile"/>
 
       <files id="common" />
+      <files id="android" if="android" />
       <files id="bonjour" if="ios" />
       <files id="bonjour" if="macos" />
    </target>
