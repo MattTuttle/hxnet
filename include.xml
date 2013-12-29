@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension>
 	<ndll name="hxnet" />
+	<template path="template/android/NsdService.java" rename="src/hxnet/NsdService.java" if="android" />
 </extension>
