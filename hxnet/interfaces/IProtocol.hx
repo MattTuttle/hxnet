@@ -1,10 +1,10 @@
-package hxnet;
+package hxnet.interfaces;
 
 import haxe.io.Input;
 
-interface Protocol
+interface IProtocol
 {
-	public function makeConnection(cnx:Connection):Void;
+	public function makeConnection(cnx:IConnection):Void;
 	public function loseConnection(?reason:String):Void;
 	public function dataReceived(input:Input):Void;
 }

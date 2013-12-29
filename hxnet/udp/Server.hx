@@ -1,19 +1,20 @@
 package hxnet.udp;
 
 import hxnet.udp.Socket;
+import hxnet.interfaces.IProtocol;
 import haxe.io.Bytes;
 import haxe.io.BytesInput;
 import haxe.Timer;
 
 typedef ClientConnection = {
 	var timeout:Float;
-	var protocol:Protocol;
+	var protocol:IProtocol;
 }
 
 class Server implements hxnet.interfaces.IServer
 {
 
-	public function new(protocol:Class<Protocol>, port:Int, hostname:String = "127.0.0.1")
+	public function new(protocol:Class<IProtocol>, port:Int, hostname:String = "127.0.0.1")
 	{
 		connections = new Map<RemoteAddress, ClientConnection>();
 		buffer = Bytes.alloc(512);
@@ -76,7 +77,7 @@ class Server implements hxnet.interfaces.IServer
 	private var lastUpdate:Float;
 	private var listener:Socket;
 	private var buffer:Bytes;
-	private var protocolClass:Class<Protocol>;
+	private var protocolClass:Class<IProtocol>;
 	private var connections:Map<RemoteAddress, ClientConnection>;
 
 }

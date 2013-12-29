@@ -3,7 +3,7 @@ package hxnet.udp;
 import hxnet.udp.Socket;
 import haxe.io.Bytes;
 
-class Connection implements hxnet.Connection
+class Connection implements hxnet.interfaces.IConnection
 {
 	public function new(socket:Socket)
 	{

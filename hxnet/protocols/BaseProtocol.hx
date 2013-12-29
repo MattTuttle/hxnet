@@ -1,13 +1,13 @@
 package hxnet.protocols;
 
-import hxnet.Connection;
+import hxnet.interfaces.IConnection;
 import haxe.io.Input;
 
-class BaseProtocol implements hxnet.Protocol
+class BaseProtocol implements hxnet.interfaces.IProtocol
 {
 	public function new() { }
 
-	public function makeConnection(cnx:Connection)
+	public function makeConnection(cnx:IConnection)
 	{
 		this.cnx = cnx;
 	}
@@ -21,5 +21,5 @@ class BaseProtocol implements hxnet.Protocol
 		this.cnx = null;
 	}
 
-	private var cnx:Connection;
+	private var cnx:IConnection;
 }

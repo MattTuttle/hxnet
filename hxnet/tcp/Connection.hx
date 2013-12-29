@@ -3,7 +3,7 @@ package hxnet.tcp;
 import sys.net.Socket;
 import haxe.io.Bytes;
 
-class Connection implements hxnet.Connection
+class Connection implements hxnet.interfaces.IConnection
 {
 
 	public function new(socket:Socket)

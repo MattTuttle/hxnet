@@ -4,11 +4,12 @@ import sys.net.Host;
 import sys.net.Socket;
 import haxe.io.Bytes;
 import haxe.io.BytesInput;
+import hxnet.interfaces.IProtocol;
 
 class Client implements hxnet.interfaces.IClient
 {
 
-	public var protocol(default, set):Protocol;
+	public var protocol(default, set):IProtocol;
 
 	public function new()
 	{
@@ -76,7 +77,7 @@ class Client implements hxnet.interfaces.IClient
 		protocol.loseConnection();
 	}
 
-	private function set_protocol(value:Protocol):Protocol
+	private function set_protocol(value:IProtocol):IProtocol
 	{
 		if (client != null)
 			value.makeConnection(new Connection(client));
