@@ -41,6 +41,7 @@ public class NsdService
 
 	public void discoverServices()
 	{
+		initializeResolveListener();
 		initializeDiscoveryListener();
 		mNsdManager.discoverServices(mServiceType, NsdManager.PROTOCOL_DNS_SD, mDiscoveryListener);
 	}
@@ -106,6 +107,27 @@ public class NsdService
 			}
 		};
 	}
+
+	public void initializeResolveListener() {
+        mResolveListener = new NsdManager.ResolveListener() {
+
+            @Override
+            public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
+                Log.e(TAG, "Resolve failed" + errorCode);
+            }
+
+            @Override
+            public void onServiceResolved(NsdServiceInfo serviceInfo) {
+                Log.e(TAG, "Resolve Succeeded. " + serviceInfo);
+
+                if (serviceInfo.getServiceName().equals(mServiceName)) {
+                    Log.d(TAG, "Same IP.");
+                    return;
+                }
+                mServiceInfo = serviceInfo;
+            }
+        };
+    }
 
 	public void initializeRegistrationListener() {
 		mRegistrationListener = new NsdManager.RegistrationListener() {

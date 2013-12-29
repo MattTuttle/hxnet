@@ -33,9 +33,9 @@ typedef BonjourCallback = BonjourService->Void;
 class Bonjour
 {
 
-	public var domain:String;
-	public var type:String;
-	public var name:String;
+	public var domain(default, null):String;
+	public var type(default, null):String;
+	public var name(default, null):String;
 	public var port:Int = 0;
 
 	public static inline var WILL_PUBLISH:String    = "willPublish";
@@ -155,7 +155,7 @@ class NsdService
 		var a = new Array<Dynamic>();
 		a.push(__jobject);
 		a.push(port);
-		__jobject = __registerService(a);
+		__registerService(a);
 	}
 
 	private var __discoverServices:Dynamic;
@@ -165,7 +165,7 @@ class NsdService
 			__discoverServices = openfl.utils.JNI.createMemberMethod("hxnet.NsdService", "discoverServices", "()V", true);
 		var a = new Array<Dynamic>();
 		a.push(__jobject);
-		__jobject = __discoverServices(a);
+		__discoverServices(a);
 	}
 
 	private var __stopService:Dynamic;
@@ -175,7 +175,7 @@ class NsdService
 			__stopService = openfl.utils.JNI.createMemberMethod("hxnet.NsdService", "stopService", "()V", true);
 		var a = new Array<Dynamic>();
 		a.push(__jobject);
-		__jobject = __stopService(a);
+		__stopService(a);
 	}
 
 	public var __jobject:Dynamic;
@@ -184,6 +184,10 @@ class NsdService
 
 class Bonjour
 {
+
+	public var domain(default, null):String;
+	public var type(default, null):String;
+	public var name(default, null):String;
 
 	public static inline var WILL_PUBLISH:String    = "willPublish";
 	public static inline var DID_PUBLISH:String     = "didPublish";
@@ -195,9 +199,13 @@ class Bonjour
 
 	public function new(domain:String, type:String, name:String)
 	{
+		this.domain = domain;
+		this.type = type;
+		this.name = name;
 		// TODO: don't depend on lime
 		var getContext = openfl.utils.JNI.createStaticMethod("org.haxe.lime.GameActivity", "getContext", "()Landroid/content/Context;", true);
 		service = new NsdService(getContext(), type, name);
+		_listeners = new Map<String, Array<BonjourCallback>>();
 	}
 
 	public function publish(port:Int)
