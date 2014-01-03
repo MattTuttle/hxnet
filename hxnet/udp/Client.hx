@@ -24,8 +24,8 @@ class Client implements hxnet.interfaces.IClient
 		address = new Address();
 		address.host = host.ip;
 		address.port = port;
-		if (protocol != null)
-			protocol.makeConnection(new Connection(client, address));
+		connection = new Connection(client, address);
+		protocol.makeConnection(connection);
 	}
 
 	public function update()
@@ -55,17 +55,19 @@ class Client implements hxnet.interfaces.IClient
 	public function close()
 	{
 		client = null;
+		connection = null;
 		protocol.loseConnection();
 	}
 
 	private function set_protocol(value:IProtocol):IProtocol
 	{
-		if (client != null && address != null)
-			value.makeConnection(new Connection(client, address));
+		if (connection != null)
+			value.makeConnection(connection);
 		protocol = value;
 		return value;
 	}
 
+	private var connection:Connection;
 	private var client:UdpSocket;
 	private var buffer:Bytes;
 	// connection info
