@@ -9,13 +9,21 @@ class Connection implements hxnet.interfaces.IConnection
 	public function new(socket:UdpSocket, address:Address)
 	{
 		this.socket = socket;
-		this.socket.setBlocking(false);
-		this.address = address;
+		this.address = address.clone();
 	}
 
 	public function writeBytes(bytes:Bytes)
 	{
-		socket.sendTo(bytes, 0, bytes.length, address);
+		try
+		{
+			socket.sendTo(bytes, 0, bytes.length, address);
+		}
+		catch (e:Dynamic)
+		{
+			#if debug
+			trace("Error writing to socket: " + e);
+			#end
+		}
 	}
 
 	public function close()
