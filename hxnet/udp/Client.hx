@@ -1,6 +1,8 @@
 package hxnet.udp;
 
-import hxnet.udp.Socket;
+import sys.net.UdpSocket;
+import sys.net.Address;
+import sys.net.Host;
 import haxe.io.Bytes;
 import haxe.io.BytesInput;
 import hxnet.interfaces.IProtocol;
@@ -12,44 +14,46 @@ class Client implements hxnet.interfaces.IClient
 	public function new()
 	{
 		buffer = Bytes.alloc(512);
-		client = new Socket();
+		client = new UdpSocket();
 	}
 
-	public function connect(hostname:String = "127.0.0.1", port:Null<Int> = 12800)
+	public function connect(?hostname:String, port:Null<Int> = 12800)
 	{
-		client.connect(hostname, port);
-		client.nonBlocking = true;
-		this.host = hostname;
-		this.port = port;
+		var host:Host = new Host(hostname == null ? Host.localhost() : hostname);
+		address = new Address();
+		address.host = host.ip;
+		address.port = port;
 	}
 
 	public function update()
 	{
-		var bytesReceived = client.receive(buffer);
-		if (bytesReceived > 0)
+		if (client != null)
 		{
-			protocol.dataReceived(new BytesInput(buffer, 0, bytesReceived));
-			trace("byte");
+			var bytesReceived = client.readFrom(buffer, 0, buffer.length, address);
+			if (bytesReceived > 0)
+			{
+				protocol.dataReceived(new BytesInput(buffer, 0, bytesReceived));
+			}
 		}
 	}
 
 	public function close()
 	{
-		client.close();
+		client = null;
 		protocol.loseConnection();
 	}
 
-	private function set_protocol(value:Protocol):Protocol
+	private function set_protocol(value:IProtocol):IProtocol
 	{
 		if (client != null)
-			value.makeConnection(new Connection(client));
+			value.makeConnection(new Connection(client, address));
 		protocol = value;
 		return value;
 	}
 
-	private var client:Socket;
+	private var client:UdpSocket;
 	private var buffer:Bytes;
 	// connection info
-	private var host:String;
+	private var address:Address;
 	private var port:Int;
 }

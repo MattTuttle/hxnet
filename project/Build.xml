@@ -26,7 +26,6 @@
    <files id="common">
       <compilerflag value="-Iinclude" />
       <compilerflag value="-Iandroid" if="android" />
-      <file name="common/UdpSocket.cpp" />
       <file name="common/ExternalInterface.cpp" />
       <compilerflag value="-stdlib=libc++" if="HXCPP_ARMV7" />
    </files>
