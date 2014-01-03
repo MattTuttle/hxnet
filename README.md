@@ -8,25 +8,25 @@ WARNING: This is alpha version code and should not be used for production use.
 An extension library for Haxe to simplify setting up client/server connections. It has support for the following:
 
 * TCP
-* UDP (modified from hxudp)
-* Bonjour service discovery and publishing [OSX, iOS, Android]
-* Predefined protocols [RPC, Telnet]
+* UDP (Haxe 3.1.x and up)
+* Zero configuration service discovery and publishing using Bonjour/jmDNS [OSX, iOS, Android]
+* Predefined simple protocols [RPC, Telnet]
 * Terminal helper function (cursor positioning, text color, etc...)
-* Custom protocols
+* Easy to create custom protocols
 
 
 ## Client/Server Architecture
 
 There are two supported transport layers, TCP and UDP, that hxnet uses. TCP is commonly used for reliable services like HTTP, FTP, Telnet, and a multitude of others. UDP is connectionless and used for quick unreliable data that is useful for games.
 
-On top of the transport layers are the Client and Server classes. These handle simple connections, data transmission/retrieval, and exceptions. The UDP classes fake a connection based on data received from different ip addresses.
+On top of the transport layers are the Client and Server classes. These handle simple connections, data transmission/retrieval, and exceptions. The UDP classes fake a connection based on data received from different ip addresses and a timeout value to determine when a connection is dropped.
 
 When creating a Client or Server object you need to pass a Protocol to it. A protocol defines the specific interactions between a client and server. For example, you can create a custom RPC based protocol that easily calls function on the server from a client (or vice versa). Another example of a protocol would be HTTP which could generate a reply from the server to a browser.
 
 
 ## License
 
-Copyright (C) 2013 Matt Tuttle
+Copyright (C) 2013-2014 Matt Tuttle
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
