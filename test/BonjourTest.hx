@@ -4,7 +4,6 @@ class BonjourTest extends haxe.unit.TestCase
 {
 	public override function setup()
 	{
-		trace("setup");
 		bonjour = new Bonjour("local.", "http.tcp.", "web");
 		bonjour.addEventListener(Bonjour.WILL_PUBLISH, didPublish);
 		bonjour.addEventListener(Bonjour.DID_PUBLISH, didPublish);

@@ -1,6 +1,6 @@
 HXCPP=haxelib run hxlibc
 
-all: lib ios testing
+all: lib ios android testing
 
 lib:
 	@cd project && $(HXCPP) Build.xml
