@@ -1,6 +1,6 @@
 -x NetTest
 -lib hxnet
--cp ..
+-D mac
 
 # --next
 

@@ -12,19 +12,17 @@
 using namespace hxnet;
 
 // neko types
-DEFINE_KIND(kBonjourHandle);
-int _id_type,
-	_id_service,
-	_id_port,
-	_id_address,
-	_id_addresses,
-	_id_ip,
-	_id_ipv6;
-
-
-// TODO: improve this to not use val_id?
-#define FIELD_IF_EXIST(O,N,T) if (service->N) \
-	alloc_field(O, val_id(#N), alloc_ ## T(service->N))
+DEFINE_KIND(k_bonjour);
+field id_type;
+field id_service;
+field id_port;
+field id_address;
+field id_addresses;
+field id_ip;
+field id_ipv6;
+field id_name;
+field id_domain;
+field id_hostName;
 
 void *objectFromAbstract(value handle, vkind kind)
 {
@@ -41,6 +39,9 @@ void network_callback(const char *type, BonjourService *service)
 {
 	if (!bonjourCallback) return;
 
+	#define FIELD_IF_EXIST(O,N,T) if (service->N) \
+		alloc_field(O, id_ ## N, alloc_ ## T(service->N))
+
 	value s = alloc_empty_object();
 	FIELD_IF_EXIST(s, name, string);
 	FIELD_IF_EXIST(s, type, string);
@@ -55,24 +56,24 @@ void network_callback(const char *type, BonjourService *service)
 		{
 			BonjourAddress *addr = &service->addresses[i];
 			value address = alloc_empty_object();
-			alloc_field(address, _id_ipv6, alloc_bool(addr->ipv6));
-			alloc_field(address, _id_ip, alloc_string(addr->ip));
-			alloc_field(address, _id_port, alloc_int(addr->port));
+			alloc_field(address, id_ipv6, alloc_bool(addr->ipv6));
+			alloc_field(address, id_ip, alloc_string(addr->ip));
+			alloc_field(address, id_port, alloc_int(addr->port));
 			val_array_set_i(addresses, i, address);
 		}
-		alloc_field(s, _id_addresses, addresses);
+		alloc_field(s, id_addresses, addresses);
 	}
 
 	value o = alloc_empty_object();
-	alloc_field(o, _id_type, alloc_string(type));
-	alloc_field(o, _id_service, s);
+	alloc_field(o, id_type, alloc_string(type));
+	alloc_field(o, id_service, s);
 
 	val_call1(bonjourCallback->get(), o);
 }
 
 void cleanupBonjourHandle(value handle)
 {
-	void *bonjourHandle = objectFromAbstract(handle, kBonjourHandle);
+	void *bonjourHandle = objectFromAbstract(handle, k_bonjour);
 	if (bonjourHandle)
 	{
 		// TODO: cleanup handle
@@ -99,6 +100,10 @@ static void hxnet_bonjour_callback(value callback)
 
 static value hxnet_publish_bonjour_service(value domain, value type, value name, value port)
 {
+	val_check(domain, string);
+	val_check(type, string);
+	val_check(name, string);
+	val_check(port, int);
 	BonjourService *service = new BonjourService();
 	service->domain = val_string(domain);
 	service->type = val_string(type);
@@ -112,7 +117,7 @@ static value hxnet_publish_bonjour_service(value domain, value type, value name,
 	{
 		publishBonjourService(bonjourHandle);
 
-		value handle = alloc_abstract(kBonjourHandle, bonjourHandle);
+		value handle = alloc_abstract(k_bonjour, bonjourHandle);
 		val_gc(handle, cleanupBonjourHandle);
 		return handle;
 	}
@@ -122,6 +127,9 @@ static value hxnet_publish_bonjour_service(value domain, value type, value name,
 
 static value hxnet_resolve_bonjour_service(value domain, value type, value name, value timeout)
 {
+	val_check(domain, string);
+	val_check(type, string);
+	val_check(name, string);
 	BonjourService *service = new BonjourService();
 	service->domain = val_string(domain);
 	service->type = val_string(type);
@@ -132,7 +140,7 @@ static value hxnet_resolve_bonjour_service(value domain, value type, value name,
 	{
 		resolveBonjourService(bonjourHandle, val_is_float(timeout) ? val_float(timeout) : val_int(timeout));
 
-		value handle = alloc_abstract(kBonjourHandle, bonjourHandle);
+		value handle = alloc_abstract(k_bonjour, bonjourHandle);
 		val_gc(handle, cleanupBonjourHandle);
 		return handle;
 	}
@@ -142,7 +150,8 @@ static value hxnet_resolve_bonjour_service(value domain, value type, value name,
 
 static value hxnet_bonjour_stop(value handle)
 {
-	void *bonjourHandle = objectFromAbstract(handle, kBonjourHandle);
+	val_check_kind(handle, k_bonjour);
+	void *bonjourHandle = objectFromAbstract(handle, k_bonjour);
 	if (bonjourHandle)
 	{
 		stopBonjourService(bonjourHandle);
@@ -164,15 +173,18 @@ DEFINE_PRIM(hxnet_bonjour_stop, 1);
 extern "C" {
 
 void hxnet_main() {
-    _id_type      = val_id("type");
-    _id_service   = val_id("service");
-    _id_port      = val_id("port");
-    _id_address   = val_id("address");
-    _id_addresses = val_id("addresses");
-    _id_ip        = val_id("ip");
-    _id_ipv6      = val_id("ipv6");
+    id_type      = val_id("type");
+    id_service   = val_id("service");
+    id_port      = val_id("port");
+    id_address   = val_id("address");
+    id_addresses = val_id("addresses");
+    id_ip        = val_id("ip");
+    id_ipv6      = val_id("ipv6");
+    id_name      = val_id("name");
+    id_domain    = val_id("domain");
+    id_hostName  = val_id("hostName");
 
-	kind_share(&kBonjourHandle, "bonjour");
+	kind_share(&k_bonjour, "bonjour");
 }
 DEFINE_ENTRY_POINT(hxnet_main);
 
