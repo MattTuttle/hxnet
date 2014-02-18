@@ -5,21 +5,16 @@ import haxe.io.Input;
 
 class BaseProtocol implements hxnet.interfaces.IProtocol
 {
+
 	public function new() { }
 
-	public function makeConnection(cnx:IConnection)
-	{
-		this.cnx = cnx;
-	}
+	public function isBlocking():Bool { return false; }
 
-	public function dataReceived(input:Input)
-	{
-	}
+	public function dataReceived(input:Input) { }
 
-	public function loseConnection(?reason:String)
-	{
-		this.cnx = null;
-	}
+	public function makeConnection(cnx:IConnection) { this.cnx = cnx; }
+
+	public function loseConnection(?reason:String) { this.cnx = null; }
 
 	private var cnx:IConnection;
 }

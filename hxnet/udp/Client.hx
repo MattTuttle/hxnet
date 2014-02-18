@@ -10,12 +10,13 @@ import hxnet.interfaces.IProtocol;
 class Client implements hxnet.interfaces.IClient
 {
 	public var protocol(default, set):IProtocol;
+	public var blocking(default, null):Bool = false;
+	public var connected(get, never):Bool;
 
 	public function new()
 	{
 		buffer = Bytes.alloc(1024);
 		client = new UdpSocket();
-		client.setBlocking(false);
 	}
 
 	public function connect(?hostname:String, port:Null<Int> = 12800)
@@ -30,25 +31,24 @@ class Client implements hxnet.interfaces.IClient
 
 	public function update()
 	{
-		if (client != null)
+		if (client == null) return;
+
+		try
 		{
-			try
+			var bytesReceived = client.readFrom(buffer, 0, buffer.length, address);
+			if (bytesReceived > 0)
 			{
-				var bytesReceived = client.readFrom(buffer, 0, buffer.length, address);
-				if (bytesReceived > 0)
-				{
-					protocol.dataReceived(new BytesInput(buffer, 0, bytesReceived));
-				}
+				protocol.dataReceived(new BytesInput(buffer, 0, bytesReceived));
 			}
-			catch (e:haxe.io.Eof)
-			{
-				protocol.loseConnection("disconnected");
-				client.close();
-				client = null;
-			}
-			catch (e:haxe.io.Error)
-			{
-			}
+		}
+		catch (e:haxe.io.Eof)
+		{
+			protocol.loseConnection("disconnected");
+			client.close();
+			client = null;
+		}
+		catch (e:haxe.io.Error)
+		{
 		}
 	}
 
@@ -61,8 +61,12 @@ class Client implements hxnet.interfaces.IClient
 
 	private function set_protocol(value:IProtocol):IProtocol
 	{
-		if (connection != null)
-			value.makeConnection(connection);
+		blocking = value.isBlocking();
+		if (client != null)
+		{
+			value.makeConnection(new Connection(client));
+			client.setBlocking(blocking);
+		}
 		protocol = value;
 		return value;
 	}
