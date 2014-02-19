@@ -86,18 +86,18 @@ class WebSocket extends BaseProtocol
 
 		switch (frame.opcode)
 		{
-			case 0x0: // continuation
+			case WebSocket.OPCODE_CONTINUE: // continuation
 				// return frame.bytes.toString();
 				throw "Continuation should be handled by recvFrame()";
-			case 0x1: // text
+			case WebSocket.OPCODE_TEXT: // text
 				recvText(frame.bytes.toString());
-			case 0x2: // binary
+			case WebSocket.OPCODE_BINARY: // binary
 				recvBinary(frame.bytes);
-			case 0x8: // close
+			case WebSocket.OPCODE_CLOSE: // close
 				cnx.close();
-			case 0x9: // ping
-				sendFrame(0xA); // send pong
-			case 0xA: // pong
+			case WebSocket.OPCODE_PING: // ping
+				sendFrame(WebSocket.OPCODE_PONG); // send pong
+			case WebSocket.OPCODE_PONG: // pong
 				// do nothing
 			default:
 				throw "Unsupported websocket opcode: " + frame.opcode;

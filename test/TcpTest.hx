@@ -4,6 +4,8 @@ import neko.vm.Thread;
 import cpp.vm.Thread;
 #end
 
+import protocol.PingPong;
+
 class TcpTest extends haxe.unit.TestCase
 {
 	public function createRPCServer()

@@ -16,11 +16,11 @@ class Client implements hxnet.interfaces.IClient
 	public function new()
 	{
 		buffer = Bytes.alloc(1024);
-		client = new UdpSocket();
 	}
 
 	public function connect(?hostname:String, port:Null<Int> = 12800)
 	{
+		client = new UdpSocket();
 		var host:Host = new Host(hostname == null ? Host.localhost() : hostname);
 		address = new Address();
 		address.host = host.ip;
@@ -31,7 +31,7 @@ class Client implements hxnet.interfaces.IClient
 
 	public function update()
 	{
-		if (client == null) return;
+		if (client == null || protocol == null) return;
 
 		try
 		{
@@ -49,14 +49,22 @@ class Client implements hxnet.interfaces.IClient
 		}
 		catch (e:haxe.io.Error)
 		{
+			// End of stream
 		}
 	}
 
 	public function close()
 	{
+		client.close();
 		client = null;
 		connection = null;
 		protocol.loseConnection();
+		protocol = null;
+	}
+
+	private function get_connected():Bool
+	{
+		return client != null;
 	}
 
 	private function set_protocol(value:IProtocol):IProtocol
@@ -64,7 +72,7 @@ class Client implements hxnet.interfaces.IClient
 		blocking = value.isBlocking();
 		if (client != null)
 		{
-			value.makeConnection(new Connection(client));
+			value.makeConnection(new Connection(client, address));
 			client.setBlocking(blocking);
 		}
 		protocol = value;

@@ -1,3 +1,5 @@
+package protocol;
+
 import hxnet.protocols.RPC;
 
 // super simple ping/pong protocol

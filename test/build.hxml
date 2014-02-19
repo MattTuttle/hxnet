@@ -1,4 +1,4 @@
--x NetTest
+-x TestMain
 -lib hxnet
 -D mac
 

@@ -1,4 +1,4 @@
-class NetTest
+class TestMain
 {
 	public static function main()
 	{

@@ -4,13 +4,15 @@ import neko.vm.Thread;
 import cpp.vm.Thread;
 #end
 
+import protocol.PingPong;
+
 class UdpTest extends haxe.unit.TestCase
 {
 	public function createRPCServer()
 	{
 		var port = Thread.readMessage(true);
 		var server = new hxnet.udp.Server(PingPong, port);
-		while (Thread.readMessage(false) == null)
+		while (Thread.readMessage(false) != "finish")
 		{
 			server.update();
 		}
