@@ -15,14 +15,14 @@ import cpp.Lib;
 
 class WebSocket extends hxnet.base.Protocol
 {
-	private static var WEBSOCKET_VERSION = 13;
+	private static inline var WEBSOCKET_VERSION = 13;
 
-	private static var OPCODE_CONTINUE = 0x0;
-	private static var OPCODE_TEXT = 0x1;
-	private static var OPCODE_BINARY = 0x2;
-	private static var OPCODE_CLOSE = 0x8;
-	private static var OPCODE_PING = 0x9;
-	private static var OPCODE_PONG = 0xA;
+	private static inline var OPCODE_CONTINUE = 0x0;
+	private static inline var OPCODE_TEXT = 0x1;
+	private static inline var OPCODE_BINARY = 0x2;
+	private static inline var OPCODE_CLOSE = 0x8;
+	private static inline var OPCODE_PING = 0x9;
+	private static inline var OPCODE_PONG = 0xA;
 
 	private var headersSent:Bool = false;
 
@@ -86,18 +86,18 @@ class WebSocket extends hxnet.base.Protocol
 
 		switch (frame.opcode)
 		{
-			case WebSocket.OPCODE_CONTINUE: // continuation
+			case OPCODE_CONTINUE: // continuation
 				// return frame.bytes.toString();
 				throw "Continuation should be handled by recvFrame()";
-			case WebSocket.OPCODE_TEXT: // text
+			case OPCODE_TEXT: // text
 				recvText(frame.bytes.toString());
-			case WebSocket.OPCODE_BINARY: // binary
+			case OPCODE_BINARY: // binary
 				recvBinary(frame.bytes);
-			case WebSocket.OPCODE_CLOSE: // close
+			case OPCODE_CLOSE: // close
 				cnx.close();
-			case WebSocket.OPCODE_PING: // ping
-				sendFrame(WebSocket.OPCODE_PONG); // send pong
-			case WebSocket.OPCODE_PONG: // pong
+			case OPCODE_PING: // ping
+				sendFrame(OPCODE_PONG); // send pong
+			case OPCODE_PONG: // pong
 				// do nothing
 			default:
 				throw "Unsupported websocket opcode: " + frame.opcode;
@@ -181,8 +181,7 @@ class WebSocket extends hxnet.base.Protocol
 
 	private function encodeBase64(content:String) : String
 	{
-		var suffix = switch (content.length % 3)
-		{
+		var suffix = switch (content.length % 3) {
 			case 2: "=";
 			case 1: "==";
 			default: "";
