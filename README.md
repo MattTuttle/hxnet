@@ -9,7 +9,6 @@ An extension library for Haxe to simplify setting up client/server connections. 
 
 * TCP
 * UDP (Haxe 3.1.x and up)
-* Zero configuration service discovery and publishing using Bonjour/jmDNS [OSX, iOS, Android]
 * Predefined simple protocols [RPC, Telnet]
 * Terminal helper function (cursor positioning, text color, etc...)
 * Easy to create custom protocols
