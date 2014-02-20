@@ -11,7 +11,7 @@ class TcpTest extends haxe.unit.TestCase
 	public function createRPCServer()
 	{
 		var port = Thread.readMessage(true);
-		var server = new hxnet.tcp.Server(PingPong, port);
+		var server = new hxnet.tcp.Server(new hxnet.base.Factory(PingPong), port);
 		while (Thread.readMessage(false) == null)
 		{
 			server.update();

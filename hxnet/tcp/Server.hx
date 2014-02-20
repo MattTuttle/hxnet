@@ -4,6 +4,7 @@ import sys.net.Host;
 import sys.net.Socket;
 import haxe.io.Bytes;
 import haxe.io.BytesInput;
+import hxnet.interfaces.IFactory;
 import hxnet.interfaces.IProtocol;
 
 class Server implements hxnet.interfaces.IServer
@@ -12,12 +13,11 @@ class Server implements hxnet.interfaces.IServer
 	public var host(default, null):String;
 	public var port(default, null):Int;
 
-	public function new(protocol:Class<IProtocol>, port:Int, ?hostname:String)
+	public function new(factory:IFactory, port:Int, ?hostname:String)
 	{
-		protocolClass = protocol;
-
 		bytes = Bytes.alloc(1024);
 
+		this.factory = factory;
 		this.host = (hostname == null ? Host.localhost() : hostname);
 		this.port = port;
 
@@ -40,7 +40,7 @@ class Server implements hxnet.interfaces.IServer
 				client.setBlocking(false);
 				readSockets.push(client);
 
-				var cnx = Type.createInstance(protocolClass, []);
+				var cnx = factory.buildProtocol();
 				var connection = new Connection(client);
 				client.custom = cnx;
 				cnx.makeConnection(connection);
@@ -83,7 +83,7 @@ class Server implements hxnet.interfaces.IServer
 		listener.close();
 	}
 
-	private var protocolClass:Class<IProtocol>;
+	private var factory:IFactory;
 	private var readSockets:Array<Socket>;
 	private var listener:Socket;
 

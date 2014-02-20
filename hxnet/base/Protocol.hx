@@ -1,9 +1,9 @@
-package hxnet.protocols;
+package hxnet.base;
 
 import hxnet.interfaces.IConnection;
 import haxe.io.Input;
 
-class BaseProtocol implements hxnet.interfaces.IProtocol
+class Protocol implements hxnet.interfaces.IProtocol
 {
 
 	public function new() { }

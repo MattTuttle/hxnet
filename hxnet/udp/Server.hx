@@ -4,6 +4,7 @@ import sys.net.UdpSocket;
 import sys.net.Address;
 import sys.net.Host;
 import hxnet.interfaces.IProtocol;
+import hxnet.interfaces.IFactory;
 import haxe.io.Bytes;
 import haxe.io.BytesInput;
 import haxe.Timer;
@@ -16,11 +17,11 @@ typedef ClientConnection = {
 class Server implements hxnet.interfaces.IServer
 {
 
-	public function new(protocol:Class<IProtocol>, port:Int, ?hostname:String)
+	public function new(factory:IFactory, port:Int, ?hostname:String)
 	{
 		connections = new Map<Address, ClientConnection>();
 		buffer = Bytes.alloc(1024);
-		protocolClass = protocol;
+		this.factory = factory;
 
 		var host = new Host(hostname == null ? Host.localhost() : hostname);
 
@@ -64,7 +65,7 @@ class Server implements hxnet.interfaces.IServer
 				else
 				{
 					// new connection
-					var protocol = Type.createInstance(protocolClass, []);
+					var protocol = factory.buildProtocol();
 					var client = new UdpSocket();
 					protocol.makeConnection(new Connection(client, address));
 					cnx = { protocol: protocol, timeout: 10 };
@@ -88,7 +89,7 @@ class Server implements hxnet.interfaces.IServer
 	private var listener:UdpSocket;
 	private var address:Address;
 	private var buffer:Bytes;
-	private var protocolClass:Class<IProtocol>;
+	private var factory:IFactory;
 	private var connections:Map<Address, ClientConnection>;
 
 }

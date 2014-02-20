@@ -4,7 +4,7 @@ import haxe.io.Input;
 import haxe.io.Bytes;
 import haxe.io.BytesOutput;
 
-class Telnet extends BaseProtocol
+class Telnet extends hxnet.base.Protocol
 {
 	public override function dataReceived(input:Input)
 	{

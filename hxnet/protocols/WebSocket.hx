@@ -13,7 +13,7 @@ import neko.Lib;
 import cpp.Lib;
 #end
 
-class WebSocket extends BaseProtocol
+class WebSocket extends hxnet.base.Protocol
 {
 	private static var WEBSOCKET_VERSION = 13;
 

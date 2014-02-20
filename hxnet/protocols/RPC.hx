@@ -10,7 +10,7 @@ import neko.Lib;
 import cpp.Lib;
 #end
 
-class RPC extends BaseProtocol
+class RPC extends hxnet.base.Protocol
 {
 
 	public var dispatcher:Dynamic;
