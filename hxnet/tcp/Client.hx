@@ -62,33 +62,40 @@ class Client implements hxnet.interfaces.IClient
 		else
 		{
 			var select = Socket.select([client], null, null, 0);
+			var byte:Int = 0;
 			for (socket in select.read)
 			{
-				var size:Int = 0;
-
-				try
+				for (i in 0...bytes.length)
 				{
-					for (i in 0...bytes.length)
+					try
 					{
-						size = i;
-						bytes.set(size, socket.input.readByte());
+						byte = socket.input.readByte();
 					}
-				}
-				catch (e:haxe.io.Eof)
-				{
-					protocol.loseConnection("disconnected");
-					client.close();
-					client = null;
-				}
-				catch (e:haxe.io.Error)
-				{
-					// End of stream
+					catch (e:haxe.io.Eof)
+					{
+						protocol.loseConnection("disconnected");
+						client.close();
+						client = null;
+						return;
+					}
+					catch (e:haxe.io.Error)
+					{
+						// end of stream
+						if (e == Blocked)
+						{
+							bytes.set(i, byte);
+							if (i > 0)
+							{
+								protocol.dataReceived(new BytesInput(bytes, 0, i));
+							}
+							return;
+						}
+					}
+
+					bytes.set(i, byte);
 				}
 
-				if (size > 0)
-				{
-					protocol.dataReceived(new BytesInput(bytes, 0, size));
-				}
+				protocol.dataReceived(new BytesInput(bytes, 0, bytes.length));
 			}
 		}
 	}
