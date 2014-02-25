@@ -1,9 +1,9 @@
 package hxnet.base;
 
-import hxnet.interfaces.IConnection;
+import hxnet.interfaces.Connection;
 import haxe.io.Input;
 
-class Protocol implements hxnet.interfaces.IProtocol
+class Protocol implements hxnet.interfaces.Protocol
 {
 
 	public function new() { }
@@ -14,9 +14,9 @@ class Protocol implements hxnet.interfaces.IProtocol
 
 	public function dataReceived(input:Input) { }
 
-	public function makeConnection(cnx:IConnection) { this.cnx = cnx; }
+	public function makeConnection(cnx:Connection) { this.cnx = cnx; }
 
 	public function loseConnection(?reason:String) { this.cnx = null; }
 
-	private var cnx:IConnection;
+	private var cnx:Connection;
 }

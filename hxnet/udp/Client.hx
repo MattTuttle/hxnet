@@ -5,11 +5,11 @@ import sys.net.Address;
 import sys.net.Host;
 import haxe.io.Bytes;
 import haxe.io.BytesInput;
-import hxnet.interfaces.IProtocol;
+import hxnet.interfaces.Protocol;
 
-class Client implements hxnet.interfaces.IClient
+class Client implements hxnet.interfaces.Client
 {
-	public var protocol(default, set):IProtocol;
+	public var protocol(default, set):Protocol;
 	public var blocking(default, null):Bool = false;
 	public var connected(get, never):Bool;
 
@@ -67,7 +67,7 @@ class Client implements hxnet.interfaces.IClient
 		return client != null;
 	}
 
-	private function set_protocol(value:IProtocol):IProtocol
+	private function set_protocol(value:Protocol):Protocol
 	{
 		blocking = value.isBlocking();
 		if (client != null)

@@ -1,6 +1,6 @@
 package hxnet.interfaces;
 
-interface IServer
+interface Server
 {
 	public function update():Void;
 	public function close():Void;

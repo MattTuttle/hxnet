@@ -1,19 +1,18 @@
 package hxnet.base;
 
-import hxnet.interfaces.IFactory;
-import hxnet.interfaces.IProtocol;
+import hxnet.interfaces.Protocol;
 
-class Factory implements IFactory
+class Factory implements hxnet.interfaces.Factory
 {
-	public function new(protocol:Class<IProtocol>)
+	public function new(protocol:Class<Protocol>)
 	{
 		this.protocol = protocol;
 	}
 
-	public function buildProtocol():IProtocol
+	public function buildProtocol():Protocol
 	{
 		return Type.createInstance(protocol, []);
 	}
 
-	private var protocol:Class<IProtocol>;
+	private var protocol:Class<Protocol>;
 }

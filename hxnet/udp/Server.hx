@@ -3,21 +3,21 @@ package hxnet.udp;
 import sys.net.UdpSocket;
 import sys.net.Address;
 import sys.net.Host;
-import hxnet.interfaces.IProtocol;
-import hxnet.interfaces.IFactory;
+import hxnet.interfaces.Protocol;
+import hxnet.interfaces.Factory;
 import haxe.io.Bytes;
 import haxe.io.BytesInput;
 import haxe.Timer;
 
 typedef ClientConnection = {
 	var timeout:Float;
-	var protocol:IProtocol;
+	var protocol:Protocol;
 }
 
-class Server implements hxnet.interfaces.IServer
+class Server implements hxnet.interfaces.Server
 {
 
-	public function new(factory:IFactory, port:Int, ?hostname:String)
+	public function new(factory:Factory, port:Int, ?hostname:String)
 	{
 		connections = new Map<Address, ClientConnection>();
 		buffer = Bytes.alloc(1024);
@@ -89,7 +89,7 @@ class Server implements hxnet.interfaces.IServer
 	private var listener:UdpSocket;
 	private var address:Address;
 	private var buffer:Bytes;
-	private var factory:IFactory;
+	private var factory:Factory;
 	private var connections:Map<Address, ClientConnection>;
 
 }

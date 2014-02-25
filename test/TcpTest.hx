@@ -77,5 +77,5 @@ class TcpTest extends haxe.unit.TestCase
 		assertEquals(0, rpc.pingCount);
 	}
 
-	private var server:hxnet.interfaces.IServer;
+	private var server:hxnet.interfaces.Server;
 }

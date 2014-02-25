@@ -4,7 +4,7 @@ import sys.net.UdpSocket;
 import sys.net.Address;
 import haxe.io.Bytes;
 
-class Connection implements hxnet.interfaces.IConnection
+class Connection implements hxnet.interfaces.Connection
 {
 	public function new(socket:UdpSocket, address:Address)
 	{

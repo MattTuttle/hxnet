@@ -1,6 +1,6 @@
 package hxnet.interfaces;
 
-interface IClient
+interface Client
 {
 	public function connect(?hostname:String, ?port:Null<Int>):Void;
 	public function update():Void;

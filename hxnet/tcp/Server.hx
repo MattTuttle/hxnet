@@ -4,16 +4,16 @@ import sys.net.Host;
 import sys.net.Socket;
 import haxe.io.Bytes;
 import haxe.io.BytesInput;
-import hxnet.interfaces.IFactory;
-import hxnet.interfaces.IProtocol;
+import hxnet.interfaces.Factory;
+import hxnet.interfaces.Protocol;
 
-class Server implements hxnet.interfaces.IServer
+class Server implements hxnet.interfaces.Server
 {
 
 	public var host(default, null):String;
 	public var port(default, null):Int;
 
-	public function new(factory:IFactory, port:Int, ?hostname:String)
+	public function new(factory:Factory, port:Int, ?hostname:String)
 	{
 		bytes = Bytes.alloc(1024);
 
@@ -47,7 +47,7 @@ class Server implements hxnet.interfaces.IServer
 			}
 			else
 			{
-				var cnx:IProtocol = socket.custom;
+				var cnx:Protocol = socket.custom;
 				var size:Int = 0;
 
 				try
@@ -83,7 +83,7 @@ class Server implements hxnet.interfaces.IServer
 		listener.close();
 	}
 
-	private var factory:IFactory;
+	private var factory:Factory;
 	private var readSockets:Array<Socket>;
 	private var listener:Socket;
 
