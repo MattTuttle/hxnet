@@ -15,7 +15,7 @@ class RPC extends hxnet.base.Protocol
 
 	public var dispatcher:Dynamic;
 
-	override private function fullPacketReceived(input:Input)
+	override private function packetReceived(input:Input)
 	{
 		var func = readString(input);
 		var numArgs = input.readInt16();
@@ -32,6 +32,11 @@ class RPC extends hxnet.base.Protocol
 					arguments.push(input.readInt8() == 1 ? true : false);
 				case TYPE_STRING:
 					arguments.push(readString(input));
+				case TYPE_BYTES:
+					var length = input.readInt32();
+					var bytes = Bytes.alloc(length);
+					input.readFullBytes(bytes, 0, length);
+					arguments.push(bytes);
 				case TYPE_OBJECT:
 					arguments.push(haxe.Unserializer.run(readString(input)));
 			}
@@ -95,6 +100,7 @@ class RPC extends hxnet.base.Protocol
 			}
 			else if (Std.is(arg, Bytes))
 			{
+				o.writeInt8(TYPE_BYTES);
 				o.writeInt32(arg.length);
 				o.writeFullBytes(arg, 0, arg.length);
 			}

@@ -9,7 +9,10 @@ import haxe.io.Input;
 class Protocol implements hxnet.interfaces.Protocol
 {
 
-	public function new() { }
+	public function new()
+	{
+		_packetLength = _packetPos = 0;
+	}
 
 	public function isConnected():Bool { return this.cnx != null; }
 
@@ -26,7 +29,7 @@ class Protocol implements hxnet.interfaces.Protocol
 		}
 	}
 
-	private function fullPacketReceived(input:Input):Void
+	private function packetReceived(input:Input):Void
 	{
 
 	}
@@ -36,10 +39,16 @@ class Protocol implements hxnet.interfaces.Protocol
 		try
 		{
 			_packetLength = input.readInt32();
+			if (_packetLength == 0) return false;
 			_packet = Bytes.alloc(_packetLength);
 		}
 		catch (e:Eof)
 		{
+			return false;
+		}
+		catch (e:Dynamic)
+		{
+			trace(e);
 			return false;
 		}
 		return true;
@@ -64,7 +73,7 @@ class Protocol implements hxnet.interfaces.Protocol
 			if (_packetPos >= _packetLength)
 			{
 				var input = new BytesInput(_packet);
-				fullPacketReceived(input);
+				packetReceived(input);
 				_packetPos = 0;
 				break;
 			}
@@ -78,7 +87,7 @@ class Protocol implements hxnet.interfaces.Protocol
 
 	private var cnx:Connection;
 
-	private var _packetLength:Int = 0;
-	private var _packetPos:Int = 0;
+	private var _packetLength:Int;
+	private var _packetPos:Int;
 	private var _packet:Bytes;
 }
