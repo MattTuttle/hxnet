@@ -53,13 +53,19 @@ class Server implements hxnet.interfaces.Server
 			}
 			else
 			{
-				var protocol:Protocol = socket.custom;
+				var cnx:Protocol = socket.custom;
 				bytesReceived = 0;
 				while (bytesReceived < len)
 				{
 					try
 					{
 						byte = socket.input.readByte();
+					}
+					catch (e:haxe.io.Eof)
+					{
+						cnx.loseConnection("disconnected");
+						socket.close();
+						readSockets.remove(socket);
 					}
 					catch (e:haxe.io.Error)
 					{
@@ -78,7 +84,7 @@ class Server implements hxnet.interfaces.Server
 				// check that buffer was filled
 				if (bytesReceived > 0)
 				{
-					protocol.dataReceived(new BytesInput(buffer, 0, bytesReceived));
+					cnx.dataReceived(new BytesInput(buffer, 0, bytesReceived));
 				}
 			}
 		}
