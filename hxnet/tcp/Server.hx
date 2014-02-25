@@ -12,10 +12,11 @@ class Server implements hxnet.interfaces.Server
 
 	public var host(default, null):String;
 	public var port(default, null):Int;
+	public var blocking(default, set):Bool = true;
 
 	public function new(factory:Factory, port:Int, ?hostname:String)
 	{
-		bytes = Bytes.alloc(1024);
+		buffer = Bytes.alloc(1024);
 
 		this.factory = factory;
 		this.host = (hostname == null ? Host.localhost() : hostname);
@@ -24,7 +25,7 @@ class Server implements hxnet.interfaces.Server
 		listener = new Socket();
 		listener.bind(new Host(host), port);
 		listener.listen(1);
-		listener.setBlocking(false);
+		listener.setBlocking(blocking);
 
 		readSockets = [listener];
 	}
@@ -32,6 +33,9 @@ class Server implements hxnet.interfaces.Server
 	public function update()
 	{
 		var select = Socket.select(readSockets, null, null, 0);
+		var byte:Int = 0,
+			len = buffer.length,
+			bytesReceived:Int;
 		for (socket in select.read)
 		{
 			if (socket == listener)
@@ -47,32 +51,32 @@ class Server implements hxnet.interfaces.Server
 			}
 			else
 			{
-				var cnx:Protocol = socket.custom;
-				var size:Int = 0;
-
-				try
+				var protocol:Protocol = socket.custom;
+				bytesReceived = 0;
+				while (bytesReceived < len)
 				{
-					for (i in 0...bytes.length)
+					try
 					{
-						size = i;
-						bytes.set(size, socket.input.readByte());
+						byte = socket.input.readByte();
 					}
-				}
-				catch (e:haxe.io.Eof)
-				{
-					cnx.loseConnection("disconnected");
-					socket.close();
-					readSockets.remove(socket);
-				}
-				catch (e:haxe.io.Error)
-				{
-					// End of stream
+					catch (e:haxe.io.Error)
+					{
+						// end of stream
+						if (e == Blocked)
+						{
+							buffer.set(bytesReceived, byte);
+							break;
+						}
+					}
+
+					buffer.set(bytesReceived, byte);
+					bytesReceived += 1;
 				}
 
-				// if we had data, send it to the protocol
-				if (size > 0 && cnx != null)
+				// check that buffer was filled
+				if (bytesReceived > 0)
 				{
-					cnx.dataReceived(new BytesInput(bytes, 0, size));
+					protocol.dataReceived(new BytesInput(buffer, 0, bytesReceived));
 				}
 			}
 		}
@@ -83,10 +87,17 @@ class Server implements hxnet.interfaces.Server
 		listener.close();
 	}
 
+	private function set_blocking(value:Bool):Bool
+	{
+		if (blocking == value) return value;
+		if (listener != null) listener.setBlocking(value);
+		return blocking = value;
+	}
+
 	private var factory:Factory;
 	private var readSockets:Array<Socket>;
 	private var listener:Socket;
 
-	private var bytes:Bytes;
+	private var buffer:Bytes;
 
 }

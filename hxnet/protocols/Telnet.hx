@@ -30,10 +30,6 @@ class Telnet extends hxnet.base.Protocol
 			return;
 		}
 
-		if (buffer == "exit")
-		{
-			cnx.close();
-		}
 		lineReceived(buffer);
 	}
 
