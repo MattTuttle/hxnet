@@ -25,16 +25,16 @@ class Server implements hxnet.interfaces.Server
 		this.port = port;
 
 		listener = new Socket();
-		listener.bind(new Host(host), port);
+		listener.bind(#if flash host #else new Host(host) #end, port);
 		listener.listen(1);
 		listener.setBlocking(blocking);
 
 		readSockets = [listener];
 	}
 
-	public function update()
+	public function update(timeout:Float=1)
 	{
-		var select = Socket.select(readSockets, null, null, 0);
+		var select = Socket.select(readSockets, null, null, timeout);
 		var byte:Int = 0,
 			len = buffer.length,
 			bytesReceived:Int;

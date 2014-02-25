@@ -31,7 +31,6 @@ class UdpTest extends haxe.unit.TestCase
 	public override function tearDown()
 	{
 		serverThread.sendMessage("finish");
-		Sys.sleep(1);
 	}
 
 	private inline function updateClient(client:hxnet.udp.Client, times:Int=100)

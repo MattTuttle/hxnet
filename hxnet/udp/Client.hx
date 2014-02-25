@@ -30,7 +30,7 @@ class Client implements hxnet.interfaces.Client
 		protocol.makeConnection(connection);
 	}
 
-	public function update()
+	public function update(timeout:Float=1)
 	{
 		if (!connected) return;
 

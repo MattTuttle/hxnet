@@ -40,7 +40,7 @@ class Client implements hxnet.interfaces.Client
 		}
 	}
 
-	public function update()
+	public function update(timeout:Float=1)
 	{
 		if (!connected) return;
 
@@ -52,7 +52,7 @@ class Client implements hxnet.interfaces.Client
 			}
 			else
 			{
-				select();
+				select(timeout);
 			}
 		}
 		catch (e:haxe.io.Eof)
@@ -63,9 +63,9 @@ class Client implements hxnet.interfaces.Client
 		}
 	}
 
-	private inline function select()
+	private inline function select(timeout:Float=1)
 	{
-		var select = Socket.select(readSockets, null, null, 0);
+		var select = Socket.select(readSockets, null, null, timeout);
 		var byte:Int = 0,
 			len = buffer.length,
 			bytesReceived:Int;

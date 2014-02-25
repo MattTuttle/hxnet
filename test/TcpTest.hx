@@ -31,12 +31,6 @@ class TcpTest extends haxe.unit.TestCase
 	public override function tearDown()
 	{
 		serverThread.sendMessage("finish");
-		Sys.sleep(1);
-	}
-
-	private inline function updateClient(client:hxnet.tcp.Client, times:Int=100)
-	{
-		while (times-- > 0) client.update();
 	}
 
 	public function testRPC()
@@ -48,7 +42,7 @@ class TcpTest extends haxe.unit.TestCase
 		client.connect(serverPort);
 		rpc.call("ping");
 
-		updateClient(client);
+		client.update();
 
 		assertTrue(rpc.pingCount > 0);
 	}
@@ -62,7 +56,7 @@ class TcpTest extends haxe.unit.TestCase
 		client.connect(serverPort);
 		rpc.call("pong", [1, 12.4]);
 
-		updateClient(client);
+		client.update();
 
 		assertTrue(rpc.pingCount > 0);
 	}
@@ -76,7 +70,7 @@ class TcpTest extends haxe.unit.TestCase
 		client.connect(serverPort);
 		rpc.call("foo", [1, 20.4, "hi"]); // this call should fail
 
-		updateClient(client, 1000);
+		client.update(0.1);
 
 		assertEquals(0, rpc.pingCount);
 	}
