@@ -16,10 +16,12 @@ class Server implements hxnet.interfaces.Server
 
 	public function new(factory:Factory, port:Int, ?hostname:String)
 	{
-		buffer = Bytes.alloc(1024);
+		buffer = Bytes.alloc(8192);
+
+		if (hostname == null) hostname = Host.localhost();
 
 		this.factory = factory;
-		this.host = (hostname == null ? Host.localhost() : hostname);
+		this.host = hostname;
 		this.port = port;
 
 		listener = new Socket();

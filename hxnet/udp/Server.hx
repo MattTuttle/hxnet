@@ -20,7 +20,7 @@ class Server implements hxnet.interfaces.Server
 	public function new(factory:Factory, port:Int, ?hostname:String)
 	{
 		connections = new Map<Address, ClientConnection>();
-		buffer = Bytes.alloc(1024);
+		buffer = Bytes.alloc(8192);
 		this.factory = factory;
 
 		var host = new Host(hostname == null ? Host.localhost() : hostname);

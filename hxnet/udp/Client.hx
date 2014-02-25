@@ -15,7 +15,7 @@ class Client implements hxnet.interfaces.Client
 
 	public function new()
 	{
-		buffer = Bytes.alloc(1024);
+		buffer = Bytes.alloc(8192);
 	}
 
 	public function connect(?hostname:String, port:Null<Int> = 12800)
