@@ -11,7 +11,7 @@ class TcpTest extends haxe.unit.TestCase
 	public function createRPCServer()
 	{
 		var port = Thread.readMessage(true);
-		var server = new hxnet.tcp.Server(new hxnet.base.Factory(PingPong), port);
+		var server = new hxnet.tcp.Server(new hxnet.base.Factory(PingPong), port, "localhost");
 		while (Thread.readMessage(false) == null)
 		{
 			server.update();
@@ -39,7 +39,7 @@ class TcpTest extends haxe.unit.TestCase
 		client.blocking = false;
 		var rpc = new PingPong();
 		client.protocol = rpc;
-		client.connect(serverPort);
+		client.connect("localhost", serverPort);
 		rpc.call("ping");
 
 		client.update();
@@ -53,7 +53,7 @@ class TcpTest extends haxe.unit.TestCase
 		client.blocking = false;
 		var rpc = new PingPong();
 		client.protocol = rpc;
-		client.connect(serverPort);
+		client.connect("localhost", serverPort);
 		rpc.call("pong", [1, 12.4]);
 
 		client.update();
@@ -67,7 +67,7 @@ class TcpTest extends haxe.unit.TestCase
 		client.blocking = false;
 		var rpc = new PingPong();
 		client.protocol = rpc;
-		client.connect(serverPort);
+		client.connect("localhost", serverPort);
 		rpc.call("foo", [1, 20.4, "hi"]); // this call should fail
 
 		client.update(0.1);

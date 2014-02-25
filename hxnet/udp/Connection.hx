@@ -3,6 +3,7 @@ package hxnet.udp;
 import sys.net.UdpSocket;
 import sys.net.Address;
 import haxe.io.Bytes;
+import haxe.io.BytesOutput;
 
 class Connection implements hxnet.interfaces.Connection
 {
@@ -12,10 +13,18 @@ class Connection implements hxnet.interfaces.Connection
 		this.address = address.clone();
 	}
 
-	public function writeBytes(bytes:Bytes):Bool
+	public function writeBytes(bytes:Bytes, writeLength:Bool=false):Bool
 	{
 		try
 		{
+			if (writeLength)
+			{
+				var out = new BytesOutput();
+				out.prepare(bytes.length);
+				out.writeInt32(bytes.length);
+				out.writeBytes(bytes, 0, bytes.length);
+				bytes = out.getBytes();
+			}
 			socket.sendTo(bytes, 0, bytes.length, address);
 		}
 		catch (e:Dynamic)

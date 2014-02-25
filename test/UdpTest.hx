@@ -11,7 +11,7 @@ class UdpTest extends haxe.unit.TestCase
 	public function createRPCServer()
 	{
 		var port = Thread.readMessage(true);
-		var server = new hxnet.udp.Server(new hxnet.base.Factory(PingPong), port);
+		var server = new hxnet.udp.Server(new hxnet.base.Factory(PingPong), port, "localhost");
 		while (Thread.readMessage(false) != "finish")
 		{
 			server.update();
@@ -43,7 +43,7 @@ class UdpTest extends haxe.unit.TestCase
 		var client = new hxnet.udp.Client();
 		var rpc = new PingPong();
 		client.protocol = rpc;
-		client.connect(serverPort);
+		client.connect("localhost", serverPort);
 		rpc.call("ping");
 
 		updateClient(client);
@@ -56,7 +56,7 @@ class UdpTest extends haxe.unit.TestCase
 		var client = new hxnet.udp.Client();
 		var rpc = new PingPong();
 		client.protocol = rpc;
-		client.connect(serverPort);
+		client.connect("localhost", serverPort);
 		rpc.call("pong", [1, 12.4]);
 
 		updateClient(client);

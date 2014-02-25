@@ -6,7 +6,7 @@ import haxe.io.BytesOutput;
 
 class Telnet extends hxnet.base.Protocol
 {
-	public override function dataReceived(input:Input)
+	override public function dataReceived(input:Input)
 	{
 		var buffer = input.readLine();
 		// filter out IAC commands for now

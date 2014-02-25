@@ -1,8 +1,8 @@
 package hxnet.protocols;
 
+import haxe.io.Bytes;
 import haxe.io.BytesOutput;
 import haxe.io.Input;
-import haxe.io.Eof;
 
 #if neko
 import neko.Lib;
@@ -15,42 +15,43 @@ class RPC extends hxnet.base.Protocol
 
 	public var dispatcher:Dynamic;
 
-	public override function dataReceived(input:Input)
+	override private function fullPacketReceived(input:Input)
 	{
+		var func = readString(input);
+		var numArgs = input.readInt16();
+		var arguments = new Array<Dynamic>();
+		while (numArgs > 0)
+		{
+			switch(input.readInt8())
+			{
+				case TYPE_INT:
+					arguments.push(input.readInt32());
+				case TYPE_FLOAT:
+					arguments.push(input.readFloat());
+				case TYPE_BOOL:
+					arguments.push(input.readInt8() == 1 ? true : false);
+				case TYPE_STRING:
+					arguments.push(readString(input));
+				case TYPE_OBJECT:
+					arguments.push(haxe.Unserializer.run(readString(input)));
+			}
+			numArgs -= 1;
+		}
+
+		dispatch(func, arguments);
+	}
+
+	private inline function dispatch(func:String, arguments:Array<Dynamic>)
+	{
+		if (dispatcher == null) dispatcher = this;
+
 		try
 		{
-			if (dispatcher == null) dispatcher = this;
-			while (true)
+			var rpcCall = Reflect.field(dispatcher, func);
+			if (rpcCall != null)
 			{
-				var func = readString(input);
-				var numArgs = input.readInt16();
-				var arguments = new Array<Dynamic>();
-				for (i in 0...numArgs)
-				{
-					switch(input.readInt8())
-					{
-						case TYPE_INT:
-							arguments.push(input.readInt32());
-						case TYPE_FLOAT:
-							arguments.push(input.readFloat());
-						case TYPE_BOOL:
-							arguments.push(input.readInt8() == 1 ? true : false);
-						case TYPE_STRING:
-							arguments.push(readString(input));
-						case TYPE_OBJECT:
-							arguments.push(haxe.Unserializer.run(readString(input)));
-					}
-				}
-				var rpcCall = Reflect.field(dispatcher, func);
-				if (rpcCall != null)
-				{
-					Reflect.callMethod(dispatcher, rpcCall, arguments);
-				}
+				Reflect.callMethod(dispatcher, rpcCall, arguments);
 			}
-		}
-		catch (e:Eof)
-		{
-			// not an error, just end of data
 		}
 		catch (e:Dynamic)
 		{
@@ -92,13 +93,19 @@ class RPC extends hxnet.base.Protocol
 				o.writeInt8(TYPE_STRING);
 				writeString(o, arg);
 			}
+			else if (Std.is(arg, Bytes))
+			{
+				o.writeInt32(arg.length);
+				o.writeFullBytes(arg, 0, arg.length);
+			}
 			else
 			{
 				o.writeInt8(TYPE_OBJECT);
 				writeString(o, haxe.Serializer.run(arg));
 			}
 		}
-		cnx.writeBytes(o.getBytes());
+
+		cnx.writeBytes(o.getBytes(), true);
 	}
 
 	private inline function readString(i:Input):String
@@ -113,9 +120,11 @@ class RPC extends hxnet.base.Protocol
 		o.writeString(value);
 	}
 
-    private static inline var TYPE_INT:Int    = 0;
-    private static inline var TYPE_FLOAT:Int  = 1;
-    private static inline var TYPE_BOOL:Int   = 2;
-    private static inline var TYPE_STRING:Int = 3;
-    private static inline var TYPE_OBJECT:Int = 4;
+	// data types
+    private static inline var TYPE_INT:Int    = 1;
+    private static inline var TYPE_FLOAT:Int  = 2;
+    private static inline var TYPE_BOOL:Int   = 3;
+    private static inline var TYPE_STRING:Int = 4;
+    private static inline var TYPE_BYTES:Int  = 5;
+    private static inline var TYPE_OBJECT:Int = 6;
 }

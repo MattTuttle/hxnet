@@ -11,10 +11,11 @@ class Connection implements hxnet.interfaces.Connection
 		this.socket = socket;
 	}
 
-	public function writeBytes(bytes:Bytes):Bool
+	public function writeBytes(bytes:Bytes, writeLength:Bool=false):Bool
 	{
 		try
 		{
+			if (writeLength) socket.output.writeInt32(bytes.length);
 			socket.output.writeBytes(bytes, 0, bytes.length);
 		}
 		catch (e:Dynamic)
