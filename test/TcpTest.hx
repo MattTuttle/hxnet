@@ -31,6 +31,7 @@ class TcpTest extends haxe.unit.TestCase
 	public override function tearDown()
 	{
 		serverThread.sendMessage("finish");
+		Sys.sleep(1);
 	}
 
 	private inline function updateClient(client:hxnet.tcp.Client, times:Int=100)
@@ -41,6 +42,7 @@ class TcpTest extends haxe.unit.TestCase
 	public function testRPC()
 	{
 		var client = new hxnet.tcp.Client();
+		client.blocking = false;
 		var rpc = new PingPong();
 		client.protocol = rpc;
 		client.connect(serverPort);
@@ -54,6 +56,7 @@ class TcpTest extends haxe.unit.TestCase
 	public function testRPCArguments()
 	{
 		var client = new hxnet.tcp.Client();
+		client.blocking = false;
 		var rpc = new PingPong();
 		client.protocol = rpc;
 		client.connect(serverPort);
@@ -67,6 +70,7 @@ class TcpTest extends haxe.unit.TestCase
 	public function testRPCFailure()
 	{
 		var client = new hxnet.tcp.Client();
+		client.blocking = false;
 		var rpc = new PingPong();
 		client.protocol = rpc;
 		client.connect(serverPort);

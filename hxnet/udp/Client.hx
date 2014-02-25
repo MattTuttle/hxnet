@@ -10,7 +10,7 @@ import hxnet.interfaces.Protocol;
 class Client implements hxnet.interfaces.Client
 {
 	public var protocol(default, set):Protocol;
-	public var blocking(default, null):Bool = false;
+	public var blocking(default, set):Bool = true;
 	public var connected(get, never):Bool;
 
 	public function new()
@@ -21,6 +21,7 @@ class Client implements hxnet.interfaces.Client
 	public function connect(?hostname:String, port:Null<Int> = 12800)
 	{
 		client = new UdpSocket();
+		client.setBlocking(blocking);
 		var host:Host = new Host(hostname == null ? Host.localhost() : hostname);
 		address = new Address();
 		address.host = host.ip;
@@ -31,15 +32,12 @@ class Client implements hxnet.interfaces.Client
 
 	public function update()
 	{
-		if (client == null || protocol == null) return;
+		if (!connected) return;
 
+		var bytesReceived = 0;
 		try
 		{
-			var bytesReceived = client.readFrom(buffer, 0, buffer.length, address);
-			if (bytesReceived > 0)
-			{
-				protocol.dataReceived(new BytesInput(buffer, 0, bytesReceived));
-			}
+			bytesReceived = client.readFrom(buffer, 0, buffer.length, address);
 		}
 		catch (e:haxe.io.Eof)
 		{
@@ -50,6 +48,11 @@ class Client implements hxnet.interfaces.Client
 		catch (e:haxe.io.Error)
 		{
 			// End of stream
+		}
+
+		if (bytesReceived > 0)
+		{
+			protocol.dataReceived(new BytesInput(buffer, 0, bytesReceived));
 		}
 	}
 
@@ -64,19 +67,23 @@ class Client implements hxnet.interfaces.Client
 
 	private function get_connected():Bool
 	{
-		return client != null;
+		return client != null && protocol != null;
+	}
+
+	private function set_blocking(value:Bool):Bool
+	{
+		if (blocking == value) return value;
+		client.setBlocking(value);
+		return blocking = value;
 	}
 
 	private function set_protocol(value:Protocol):Protocol
 	{
-		blocking = value.isBlocking();
 		if (client != null)
 		{
 			value.makeConnection(new Connection(client, address));
-			client.setBlocking(blocking);
 		}
-		protocol = value;
-		return value;
+		return protocol = value;
 	}
 
 	private var connection:Connection;

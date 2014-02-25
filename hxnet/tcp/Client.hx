@@ -10,12 +10,12 @@ class Client implements hxnet.interfaces.Client
 {
 
 	public var protocol(default, set):Protocol;
-	public var blocking(default, null):Bool = false;
+	public var blocking(default, set):Bool = true;
 	public var connected(get, never):Bool;
 
 	public function new()
 	{
-		bytes = Bytes.alloc(1024);
+		buffer = Bytes.alloc(1024);
 	}
 
 	public function connect(?hostname:String, port:Null<Int> = 12800)
@@ -24,16 +24,14 @@ class Client implements hxnet.interfaces.Client
 		{
 			client = new Socket();
 			if (hostname == null) hostname = Host.localhost();
-			#if flash
-			client.connect(hostname, port);
-			#else
-			client.connect(new Host(hostname), port);
-			#end
+			client.connect(#if flash hostname #else new Host(hostname) #end, port);
+			// prevent recreation of array on every update
+			readSockets = [client];
 			if (protocol != null)
 			{
 				protocol.makeConnection(new Connection(client));
-				client.setBlocking(protocol.isBlocking());
 			}
+			client.setBlocking(blocking);
 		}
 		catch (e:Dynamic)
 		{
@@ -44,58 +42,60 @@ class Client implements hxnet.interfaces.Client
 
 	public function update()
 	{
-		if (protocol == null || client == null) return;
+		if (!connected) return;
 
-		if (blocking)
+		try
 		{
-			try
+			if (blocking)
 			{
 				protocol.dataReceived(client.input);
 			}
-			catch (e:haxe.io.Eof)
+			else
 			{
-				protocol.loseConnection("disconnected");
-				client.close();
-				client = null;
+				select();
 			}
 		}
-		else
+		catch (e:haxe.io.Eof)
 		{
-			var select = Socket.select([client], null, null, 0);
-			var byte:Int = 0;
-			for (socket in select.read)
-			{
-				for (i in 0...bytes.length)
-				{
-					try
-					{
-						byte = socket.input.readByte();
-					}
-					catch (e:haxe.io.Eof)
-					{
-						protocol.loseConnection("disconnected");
-						client.close();
-						client = null;
-						return;
-					}
-					catch (e:haxe.io.Error)
-					{
-						// end of stream
-						if (e == Blocked)
-						{
-							bytes.set(i, byte);
-							if (i > 0)
-							{
-								protocol.dataReceived(new BytesInput(bytes, 0, i));
-							}
-							return;
-						}
-					}
+			protocol.loseConnection("disconnected");
+			client.close();
+			client = null;
+		}
+	}
 
-					bytes.set(i, byte);
+	private inline function select()
+	{
+		var select = Socket.select(readSockets, null, null, 0);
+		var byte:Int = 0,
+			len = buffer.length,
+			bytesReceived:Int;
+		for (socket in select.read)
+		{
+			bytesReceived = 0;
+			while (bytesReceived < len)
+			{
+				try
+				{
+					byte = socket.input.readByte();
+				}
+				catch (e:haxe.io.Error)
+				{
+					// end of stream
+					if (e == Blocked)
+					{
+						buffer.set(bytesReceived, byte);
+						break;
+					}
 				}
 
-				protocol.dataReceived(new BytesInput(bytes, 0, bytes.length));
+				buffer.set(bytesReceived, byte);
+				bytesReceived += 1;
+			}
+
+			// check that buffer was filled
+			if (bytesReceived > 0)
+			{
+				protocol.dataReceived(new BytesInput(buffer, 0, bytesReceived));
 			}
 		}
 	}
@@ -110,22 +110,27 @@ class Client implements hxnet.interfaces.Client
 
 	private inline function get_connected():Bool
 	{
-		return client != null;
+		return client != null && protocol != null;
+	}
+
+	private function set_blocking(value:Bool):Bool
+	{
+		if (blocking == value) return value;
+		if (client != null) client.setBlocking(value);
+		return blocking = value;
 	}
 
 	private function set_protocol(value:Protocol):Protocol
 	{
-		blocking = value.isBlocking();
 		if (client != null)
 		{
 			value.makeConnection(new Connection(client));
-			client.setBlocking(blocking);
 		}
-		protocol = value;
-		return value;
+		return protocol = value;
 	}
 
 	private var client:Socket;
-	private var bytes:Bytes;
+	private var readSockets:Array<Socket>;
+	private var buffer:Bytes;
 
 }

@@ -8,8 +8,6 @@ class Protocol implements hxnet.interfaces.Protocol
 
 	public function new() { }
 
-	public function isBlocking():Bool { return false; }
-
 	public function isConnected():Bool { return this.cnx != null; }
 
 	public function dataReceived(input:Input) { }

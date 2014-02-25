@@ -31,6 +31,7 @@ class UdpTest extends haxe.unit.TestCase
 	public override function tearDown()
 	{
 		serverThread.sendMessage("finish");
+		Sys.sleep(1);
 	}
 
 	private inline function updateClient(client:hxnet.udp.Client, times:Int=100)
@@ -62,19 +63,6 @@ class UdpTest extends haxe.unit.TestCase
 		updateClient(client);
 
 		assertTrue(rpc.pingCount > 0);
-	}
-
-	public function testRPCFailure()
-	{
-		var client = new hxnet.udp.Client();
-		var rpc = new PingPong();
-		client.protocol = rpc;
-		client.connect(serverPort);
-		rpc.call("foo", [1, 20.4, "hi"]); // this call should fail
-
-		updateClient(client, 1000);
-
-		assertEquals(0, rpc.pingCount);
 	}
 
 	private var server:hxnet.interfaces.Server;

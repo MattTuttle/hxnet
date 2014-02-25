@@ -12,7 +12,7 @@ class Connection implements hxnet.interfaces.Connection
 		this.address = address.clone();
 	}
 
-	public function writeBytes(bytes:Bytes)
+	public function writeBytes(bytes:Bytes):Bool
 	{
 		try
 		{
@@ -23,7 +23,9 @@ class Connection implements hxnet.interfaces.Connection
 			#if debug
 			trace("Error writing to socket: " + e);
 			#end
+			return false;
 		}
+		return true;
 	}
 
 	public function close()
