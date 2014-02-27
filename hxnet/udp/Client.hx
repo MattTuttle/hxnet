@@ -1,5 +1,7 @@
 package hxnet.udp;
 
+#if !flash
+
 import sys.net.UdpSocket;
 import sys.net.Address;
 import sys.net.Host;
@@ -93,3 +95,5 @@ class Client implements hxnet.interfaces.Client
 	private var address:Address;
 	private var port:Int;
 }
+
+#end

@@ -1,5 +1,7 @@
 package hxnet.tcp;
 
+#if !flash
+
 import sys.net.Host;
 import sys.net.Socket;
 import haxe.io.Bytes;
@@ -109,3 +111,5 @@ class Server implements hxnet.interfaces.Server
 	private var buffer:Bytes;
 
 }
+
+#end

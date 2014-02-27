@@ -5,7 +5,7 @@ import haxe.io.Bytes;
 import haxe.io.BytesOutput;
 import haxe.io.Input;
 import haxe.io.Eof;
-import hxnet.interfaces.IConnection;
+import hxnet.interfaces.Connection;
 
 #if neko
 import neko.Lib;
@@ -43,12 +43,7 @@ class WebSocket extends hxnet.base.Protocol
 		this.origin = origin;
 	}
 
-	override public function isBlocking():Bool
-	{
-		return true;
-	}
-
-	override public function makeConnection(cnx:IConnection)
+	override public function makeConnection(cnx:Connection)
 	{
 		super.makeConnection(cnx);
 

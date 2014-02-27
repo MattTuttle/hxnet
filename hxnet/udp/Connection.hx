@@ -1,5 +1,7 @@
 package hxnet.udp;
 
+#if !flash
+
 import sys.net.UdpSocket;
 import sys.net.Address;
 import haxe.io.Bytes;
@@ -45,3 +47,5 @@ class Connection implements hxnet.interfaces.Connection
 	private var socket:UdpSocket;
 	private var address:Address;
 }
+
+#end
