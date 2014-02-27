@@ -10,11 +10,20 @@ import neko.Lib;
 import cpp.Lib;
 #end
 
+/**
+ * Remote Procedure Call protocol
+ */
 class RPC extends hxnet.base.Protocol
 {
 
-	public var dispatcher:Dynamic;
+	/**
+	 * The object to call methods on. Defaults to the RPC protocol object.
+	 */
+	public var dispatcher:Dynamic = this;
 
+	/**
+	 * When a full packet is received the method and arguments are read and executed.
+	 */
 	override private function packetReceived(input:Input)
 	{
 		var func = readString(input);
@@ -46,10 +55,12 @@ class RPC extends hxnet.base.Protocol
 		dispatch(func, arguments);
 	}
 
+	/**
+	 * Dispatches a method with arguments
+	 * @throws Invalid calls when dispatcher object does not contain the method or the declaration doesn't match the number of arguments passed.
+	 */
 	private inline function dispatch(func:String, arguments:Array<Dynamic>)
 	{
-		if (dispatcher == null) dispatcher = this;
-
 		try
 		{
 			var rpcCall = Reflect.field(dispatcher, func);
@@ -69,12 +80,17 @@ class RPC extends hxnet.base.Protocol
 		}
 	}
 
-	public function call(func:String, ?arguments:Array<Dynamic>)
+	/**
+	 * Calls a procedure remotely through connection
+	 * @param method     The method to call on the remote end
+	 * @param arguments  The method arguments to use on the remote end
+	 */
+	public function call(method:String, ?arguments:Array<Dynamic>)
 	{
 		if (arguments == null) arguments = [];
 
 		var o = new BytesOutput();
-		writeString(o, func);
+		writeString(o, method);
 		o.writeInt16(arguments.length);
 		for (arg in arguments)
 		{
@@ -114,12 +130,21 @@ class RPC extends hxnet.base.Protocol
 		cnx.writeBytes(o.getBytes(), true);
 	}
 
+	/**
+	 * Convenience method to read string from input
+	 * @param i Input object to read from
+	 */
 	private inline function readString(i:Input):String
 	{
 		var len = i.readInt32();
 		return i.readString(len);
 	}
 
+	/**
+	 * Convenience method to write string to output
+	 * @param o Output object to write to
+	 * @param value String value to write
+	 */
 	private inline function writeString(o:BytesOutput, value:String)
 	{
 		o.writeInt32(value.length);

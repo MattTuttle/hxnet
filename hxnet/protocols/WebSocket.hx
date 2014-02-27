@@ -13,6 +13,9 @@ import neko.Lib;
 import cpp.Lib;
 #end
 
+/**
+ * WebSocket protocol (RFC 6455)
+ */
 class WebSocket extends hxnet.base.Protocol
 {
 	private static inline var WEBSOCKET_VERSION = 13;
@@ -32,6 +35,9 @@ class WebSocket extends hxnet.base.Protocol
 	private var key:String;
 	private var origin:String;
 
+	/**
+	 * Construct the WebSocket protocol
+	 */
 	public function new(url:String, host:String, port:Int, origin:String, key:String="key")
 	{
 		super();
@@ -43,6 +49,10 @@ class WebSocket extends hxnet.base.Protocol
 		this.origin = origin;
 	}
 
+	/**
+	 * Upon connecting with another WebSocket send handshake
+	 * @param cnx The remote connection
+	 */
 	override public function makeConnection(cnx:Connection)
 	{
 		super.makeConnection(cnx);
@@ -64,6 +74,10 @@ class WebSocket extends hxnet.base.Protocol
 		headersSent = true;
 	}
 
+	/**
+	 * When data is received for the protocol this method is called.
+	 * @param input The input data
+	 */
 	override public function dataReceived(input:Input)
 	{
 		if (headersSent)
@@ -99,20 +113,37 @@ class WebSocket extends hxnet.base.Protocol
 		}
 	}
 
+	/**
+	 * Overridable functions for receiving text
+	 */
 	private function recvText(text:String) { }
 
+	/**
+	 * Overridable functions for receiving binary data
+	 */
 	private function recvBinary(data:Bytes) { }
 
+	/**
+	 * Sends text over connection
+	 */
 	public function sendText(text:String)
 	{
-		sendFrame(0x1, Bytes.ofString(text));
+		sendFrame(OPCODE_TEXT, Bytes.ofString(text));
 	}
 
+	/**
+	 * Sends binary data over connection
+	 */
 	public function sendBinary(bytes:Bytes)
 	{
-		sendFrame(0x2, bytes);
+		sendFrame(OPCODE_BINARY, bytes);
 	}
 
+	/**
+	 * Sends a frame of data (text, binary, ping)
+	 * @param opcode  Value of the WebSocket protocol opcode
+	 * @param bytes   The data to send, if any
+	 */
 	private function sendFrame(opcode:Int, ?bytes:haxe.io.Bytes)
 	{
 		var bytes = new BytesOutput();
@@ -128,6 +159,9 @@ class WebSocket extends hxnet.base.Protocol
 		cnx.writeBytes(bytes.getBytes());
 	}
 
+	/**
+	 * Reads a complete WebSocket frame
+	 */
 	private inline function recvFrame(input:Input)
 	{
 		var opcode = input.readByte();
@@ -174,7 +208,10 @@ class WebSocket extends hxnet.base.Protocol
 		};
 	}
 
-	private function encodeBase64(content:String) : String
+	/**
+	 * Helper function to encode content into base 64
+	 */
+	private function encodeBase64(content:String):String
 	{
 		var suffix = switch (content.length % 3) {
 			case 2: "=";

@@ -1,0 +1,18 @@
+-cp ..
+--no-output
+--macro include('hxnet')
+
+--each
+
+-neko hxnet.n
+-xml neko.xml
+
+--next
+
+-cpp hxnet.cpp
+-xml cpp.xml
+
+--next
+
+-swf hxnet.swf
+-xml flash.xml
