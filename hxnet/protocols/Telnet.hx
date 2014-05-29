@@ -11,26 +11,45 @@ import haxe.io.BytesOutput;
 class Telnet extends hxnet.base.Protocol
 {
 
-	public function new()
-	{
-		super();
-		iacSupport = new IntMap<Bool>();
-	}
-
 	/**
 	 * Upon receiving data this method is called
 	 * @param input The input to read from
 	 */
 	override public function dataReceived(input:Input)
 	{
-		var buffer = input.readLine();
+		var line = input.readLine();
 
-		// handle IAC codes
-		while (buffer.charCodeAt(0) == IAC)
+		// strip out IAC codes
+		var buffer = "";
+		var i = 0, last = 0;
+		while (i < line.length)
 		{
-			iacSupport.set(buffer.charCodeAt(2), (buffer.charCodeAt(1) == DO) ? true : false);
-			buffer = buffer.substr(3);
+			if (line.charCodeAt(i) == IAC)
+			{
+				buffer += line.substr(last, i - last);
+
+				var command = line.charCodeAt(++i);
+				if (command == 0xF1) { } // NOP
+				else if (command == 0xFA) // SB
+				{
+					var code = line.charCodeAt(++i);
+					var data = new BytesOutput();
+					while (!(line.charCodeAt(i) == IAC && line.charCodeAt(i+1) == 0xF0)) // SE
+					{
+						data.writeByte(line.charCodeAt(++i));
+					}
+					handleIACData(code, data.getBytes());
+					i += 1;
+				}
+				else
+				{
+					handleIAC(command, line.charCodeAt(++i));
+				}
+				last = i;
+			}
+			i += 1;
 		}
+		buffer += line.substr(last, i - last);
 
 		if (promptCallback != null)
 		{
@@ -64,10 +83,8 @@ class Telnet extends hxnet.base.Protocol
 		cnx.writeBytes(out.getBytes());
 	}
 
-	public inline function iacSupports(code:Int):Bool
-	{
-		return iacSupport.exists(code) ? iacSupport.get(code) : false;
-	}
+	public function handleIACData(code:Int, data:Bytes) { }
+	private function handleIAC(command:Int, code:Int) { }
 
 	/**
 	 * Send a line of text over the connection
@@ -82,16 +99,7 @@ class Telnet extends hxnet.base.Protocol
 	 * Turns echo on/off on the remote side. Useful for password entry.
 	 * @param show Whether to show keyboard output on the remote connection.
 	 */
-	public function echo(show:Bool = true)
-	{
-		var out = new BytesOutput();
-		out.writeByte(0xFF);
-		out.writeByte(show ? 0xFC : 0xFB);
-		out.writeByte(0x01);
-		if (show)
-			out.writeString("\r\n");
-		cnx.writeBytes(out.getBytes());
-	}
+	public function echo(show:Bool = true) { iacSend(show ? 0xFC : 0xFB, 0x01); }
 
 	/**
 	 * Prompt the user for feedback and return answer to callback
@@ -113,12 +121,10 @@ class Telnet extends hxnet.base.Protocol
 	 */
 	private function lineReceived(line:String) { }
 
-	private var iacSupport:IntMap<Bool>;
-
-	private static inline var WILL = 251;
-	private static inline var WONT = 252;
-	private static inline var DO   = 253;
-	private static inline var DONT = 254;
-	private static inline var IAC  = 255;
+	private static inline var WILL = 0xFB;
+	private static inline var WONT = 0xFC;
+	private static inline var DO   = 0xFD;
+	private static inline var DONT = 0xFE;
+	private static inline var IAC  = 0xFF;
 
 }
