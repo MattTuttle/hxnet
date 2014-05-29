@@ -1,5 +1,6 @@
 package hxnet.protocols;
 
+import haxe.ds.IntMap;
 import haxe.io.Input;
 import haxe.io.Bytes;
 import haxe.io.BytesOutput;
@@ -10,6 +11,12 @@ import haxe.io.BytesOutput;
 class Telnet extends hxnet.base.Protocol
 {
 
+	public function new()
+	{
+		super();
+		iacSupport = new IntMap<Bool>();
+	}
+
 	/**
 	 * Upon receiving data this method is called
 	 * @param input The input to read from
@@ -17,9 +24,13 @@ class Telnet extends hxnet.base.Protocol
 	override public function dataReceived(input:Input)
 	{
 		var buffer = input.readLine();
-		// filter out IAC commands for now
-		if (buffer.charCodeAt(0) == 0xFF)
-			return;
+
+		// handle IAC codes
+		while (buffer.charCodeAt(0) == IAC)
+		{
+			iacSupport.set(buffer.charCodeAt(2), (buffer.charCodeAt(1) == DO) ? true : false);
+			buffer = buffer.substr(3);
+		}
 
 		if (promptCallback != null)
 		{
@@ -41,14 +52,30 @@ class Telnet extends hxnet.base.Protocol
 		lineReceived(buffer);
 	}
 
+	public function iacWill(code:Int):Void { iacSend(WILL, code); }
+	public function iacWont(code:Int):Void { iacSend(WONT, code); }
+
+	private inline function iacSend(command:Int, code:Int):Void
+	{
+		var out = new BytesOutput();
+		out.writeByte(IAC);
+		out.writeByte(command);
+		out.writeByte(code);
+		cnx.writeBytes(out.getBytes());
+	}
+
+	public inline function iacSupports(code:Int):Bool
+	{
+		return iacSupport.exists(code) ? iacSupport.get(code) : false;
+	}
+
 	/**
 	 * Send a line of text over the connection
 	 * @param data The string data to write
 	 */
-	public function writeLine(data:String)
+	public function writeLine(data:String):Void
 	{
-		data += "\r\n";
-		cnx.writeBytes(Bytes.ofString(data));
+		cnx.writeBytes(Bytes.ofString(data + "\r\n"));
 	}
 
 	/**
@@ -85,4 +112,13 @@ class Telnet extends hxnet.base.Protocol
 	 * Overridable method when a line is received. Used in subclasses.
 	 */
 	private function lineReceived(line:String) { }
+
+	private var iacSupport:IntMap<Bool>;
+
+	private static inline var WILL = 251;
+	private static inline var WONT = 252;
+	private static inline var DO   = 253;
+	private static inline var DONT = 254;
+	private static inline var IAC  = 255;
+
 }
