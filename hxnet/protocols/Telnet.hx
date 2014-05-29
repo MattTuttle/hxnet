@@ -5,6 +5,8 @@ import haxe.io.Input;
 import haxe.io.Bytes;
 import haxe.io.BytesOutput;
 
+using StringTools;
+
 /**
  * Telnet protocol
  */
@@ -45,34 +47,35 @@ class Telnet extends hxnet.base.Protocol
 				{
 					handleIAC(command, line.charCodeAt(++i));
 				}
-				last = i;
+				last = i + 1;
 			}
 			i += 1;
 		}
-		buffer += line.substr(last, i - last);
+		buffer += line.substr(last, line.length - last);
 
-		if (promptCallback != null)
+		buffer = buffer.trim();
+		if (buffer != "")
 		{
-			// save current callback for comparison
-			var callback = promptCallback;
-			if (callback(buffer))
+			if (promptCallback != null)
 			{
-				// don't set to null if a different prompt has been set
-				if (promptCallback == callback)
-					promptCallback = null;
+				// save current callback for comparison
+				var callback = promptCallback;
+				if (callback(buffer))
+				{
+					// don't set to null if a different prompt has been set
+					if (promptCallback == callback)
+						promptCallback = null;
+				}
+				else
+				{
+					cnx.writeBytes(promptBytes);
+				}
+				return;
 			}
-			else
-			{
-				cnx.writeBytes(promptBytes);
-			}
-			return;
+
+			lineReceived(buffer);
 		}
-
-		lineReceived(buffer);
 	}
-
-	public function iacWill(code:Int):Void { iacSend(WILL, code); }
-	public function iacWont(code:Int):Void { iacSend(WONT, code); }
 
 	private inline function iacSend(command:Int, code:Int):Void
 	{
@@ -83,7 +86,7 @@ class Telnet extends hxnet.base.Protocol
 		cnx.writeBytes(out.getBytes());
 	}
 
-	public function handleIACData(code:Int, data:Bytes) { }
+	private function handleIACData(code:Int, data:Bytes) { }
 	private function handleIAC(command:Int, code:Int) { }
 
 	/**
