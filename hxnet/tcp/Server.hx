@@ -27,19 +27,32 @@ class Server implements hxnet.interfaces.Server
 		this.port = port;
 
 		listener = new Socket();
-		listener.bind(#if flash host #else new Host(host) #end, port);
-		listener.listen(1);
-		listener.setBlocking(blocking);
 
 		readSockets = [listener];
 	}
 
+	public function listen()
+	{
+		listener.bind(#if flash host #else new Host(host) #end, port);
+		listener.listen(1);
+		listener.setBlocking(blocking);
+	}
+
+	public function start()
+	{
+		listen();
+		while (true) {
+			update();
+			Sys.sleep(0.01); // wait for 1 ms
+		}
+	}
+
 	public function update(timeout:Float=1)
 	{
+		var len = buffer.length,
+			bytesReceived:Int,
+			cnx:Protocol;
 		var select = Socket.select(readSockets, null, null, timeout);
-		var byte:Int = 0,
-			len = buffer.length,
-			bytesReceived:Int;
 		for (socket in select.read)
 		{
 			if (socket == listener)
@@ -48,45 +61,32 @@ class Server implements hxnet.interfaces.Server
 				client.setBlocking(false);
 				readSockets.push(client);
 
-				var cnx = factory.buildProtocol();
+				cnx = factory.buildProtocol();
 				var connection = new Connection(client);
 				client.custom = cnx;
 				cnx.makeConnection(connection);
 			}
 			else
 			{
-				var cnx:Protocol = socket.custom;
-				bytesReceived = 0;
-				while (bytesReceived < len)
+				cnx = socket.custom;
+				try
 				{
-					try
+					bytesReceived = socket.input.readBytes(buffer, 0, len);
+					// check that buffer was filled
+					if (bytesReceived > 0)
 					{
-						byte = socket.input.readByte();
+						cnx.dataReceived(new BytesInput(buffer, 0, bytesReceived));
 					}
-					catch (e:haxe.io.Eof)
-					{
-						cnx.loseConnection("disconnected");
-						socket.close();
-						readSockets.remove(socket);
-					}
-					catch (e:haxe.io.Error)
-					{
-						// end of stream
-						if (e == Blocked)
-						{
-							buffer.set(bytesReceived, byte);
-							break;
-						}
-					}
-
-					buffer.set(bytesReceived, byte);
-					bytesReceived += 1;
 				}
-
-				// check that buffer was filled
-				if (bytesReceived > 0)
+				catch (e:haxe.io.Eof)
 				{
-					cnx.dataReceived(new BytesInput(buffer, 0, bytesReceived));
+					cnx.loseConnection("disconnected");
+					socket.close();
+					readSockets.remove(socket);
+				}
+				if (!cnx.isConnected())
+				{
+					readSockets.remove(socket);
 				}
 			}
 		}

@@ -15,6 +15,11 @@ class Connection implements hxnet.interfaces.Connection
 		this.socket = socket;
 	}
 
+	public function isOpen()
+	{
+		return socket != null;
+	}
+
 	public function writeBytes(bytes:Bytes, writeLength:Bool=false):Bool
 	{
 		try
@@ -43,6 +48,7 @@ class Connection implements hxnet.interfaces.Connection
 	public function close()
 	{
 		socket.close();
+		socket = null;
 	}
 
 	private var socket:Socket;
