@@ -1,6 +1,7 @@
 package hxnet.protocols;
 
-import haxe.crypto.BaseCode;
+import haxe.crypto.Base64;
+import haxe.crypto.Sha1;
 import haxe.io.Bytes;
 import haxe.io.BytesOutput;
 import haxe.io.Input;
@@ -13,12 +14,14 @@ import neko.Lib;
 import cpp.Lib;
 #end
 
+using StringTools;
+
 /**
  * WebSocket protocol (RFC 6455)
  */
 class WebSocket extends hxnet.base.Protocol
 {
-	private static inline var WEBSOCKET_VERSION = 13;
+	private static inline var WEBSOCKET_VERSION = "13";
 
 	private static inline var OPCODE_CONTINUE = 0x0;
 	private static inline var OPCODE_TEXT = 0x1;
@@ -27,14 +30,6 @@ class WebSocket extends hxnet.base.Protocol
 	private static inline var OPCODE_PING = 0x9;
 	private static inline var OPCODE_PONG = 0xA;
 
-	private var headersSent:Bool = false;
-
-	private var host:String;
-	private var url:String;
-	private var port:Int;
-	private var key:String;
-	private var origin:String;
-
 	/**
 	 * Construct the WebSocket protocol
 	 */
@@ -42,36 +37,47 @@ class WebSocket extends hxnet.base.Protocol
 	{
 		super();
 
-		this.host = host;
-		this.url = url;
-		this.port = port;
-		this.key = key;
-		this.origin = origin;
+		_host = host;
+		_url = url;
+		_port = port;
+		_key = Base64.encode(Bytes.ofString(key));
+		_origin = origin;
+		_headers = new Array<String>();
+	}
+
+	function setHeader(key:String, value:String)
+	{
+		_headers.push(key + ": " + value);
+	}
+
+	function writeHeader(http:String)
+	{
+		_headers.insert(0, http);
+		cnx.writeBytes(Bytes.ofString(_headers.join("\r\n") + "\r\n\r\n"));
+		_headers = new Array<String>();
+		_useHttp = false;
 	}
 
 	/**
 	 * Upon connecting with another WebSocket send handshake
 	 * @param cnx The remote connection
 	 */
-	override public function makeConnection(cnx:Connection)
+	override public function makeConnection(cnx:Connection, isClient:Bool)
 	{
-		super.makeConnection(cnx);
+		super.makeConnection(cnx, isClient);
 
-		var headers = new Array<String>();
+		if (isClient)
+		{
+			setHeader("Host", _host + ":" + _port);
+			setHeader("Upgrade", "websocket");
+			setHeader("Connection", "Upgrade");
+			setHeader("Sec-WebSocket-Key", _key);
+			setHeader("Sec-WebSocket-Version", WEBSOCKET_VERSION);
+			setHeader("Origin", _origin);
 
-		headers.push("GET " + url + " HTTP/1.1");
-		headers.push("Host: " + host + ":" + port);
-		headers.push("Upgrade: websocket");
-		headers.push("Connection: Upgrade");
-		headers.push("Sec-WebSocket-Key: " + encodeBase64(key));
-		headers.push("Sec-WebSocket-Version: " + WEBSOCKET_VERSION);
-		headers.push("Origin: " + origin);
-
-		// send headers
-		var header = headers.join("\r\n") + "\r\n\r\n";
-		cnx.writeBytes(Bytes.ofString(header));
-
-		headersSent = true;
+			// send headers
+			writeHeader("GET " + _url + " HTTP/1.1");
+		}
 	}
 
 	/**
@@ -80,36 +86,50 @@ class WebSocket extends hxnet.base.Protocol
 	 */
 	override public function dataReceived(input:Input)
 	{
-		if (headersSent)
+		if (_useHttp) // http protocol
 		{
 			var line:String;
 			while((line = input.readLine()) != "")
 			{
-				// trace(line);
+				var colon = line.indexOf(":");
+				if (colon != -1)
+				{
+					var key = line.substr(0, colon).trim();
+					var value = line.substr(colon + 1).trim();
+					if (key == "Sec-WebSocket-Key")
+					{
+						var accept = Base64.encode(Sha1.make(Bytes.ofString(value + MAGIC_STRING)));
+						setHeader("Upgrade", "websocket");
+						setHeader("Connection", "upgrade");
+						setHeader("Sec-WebSocket-Accept", accept);
+					}
+				}
 			}
-			headersSent = false;
+			writeHeader("HTTP/1.1 101 Switching Protocols");
 		}
-
-		// loop until we get text or binary data
-		var frame = recvFrame(input);
-
-		switch (frame.opcode)
+		else // websocket protocol
 		{
-			case OPCODE_CONTINUE: // continuation
-				// return frame.bytes.toString();
-				throw "Continuation should be handled by recvFrame()";
-			case OPCODE_TEXT: // text
-				recvText(frame.bytes.toString());
-			case OPCODE_BINARY: // binary
-				recvBinary(frame.bytes);
-			case OPCODE_CLOSE: // close
-				cnx.close();
-			case OPCODE_PING: // ping
-				sendFrame(OPCODE_PONG); // send pong
-			case OPCODE_PONG: // pong
-				// do nothing
-			default:
-				throw "Unsupported websocket opcode: " + frame.opcode;
+			// loop until we get text or binary data
+			var frame = recvFrame(input);
+
+			switch (frame.opcode)
+			{
+				case OPCODE_CONTINUE: // continuation
+					// return frame.bytes.toString();
+					throw "Continuation should be handled by recvFrame()";
+				case OPCODE_TEXT: // text
+					recvText(frame.bytes.toString());
+				case OPCODE_BINARY: // binary
+					recvBinary(frame.bytes);
+				case OPCODE_CLOSE: // close
+					cnx.close();
+				case OPCODE_PING: // ping
+					sendFrame(OPCODE_PONG); // send pong
+				case OPCODE_PONG: // pong
+					// do nothing
+				default:
+					throw "Unsupported websocket opcode: " + frame.opcode;
+			}
 		}
 	}
 
@@ -146,17 +166,31 @@ class WebSocket extends hxnet.base.Protocol
 	 */
 	private function sendFrame(opcode:Int, ?bytes:haxe.io.Bytes)
 	{
-		var bytes = new BytesOutput();
-		var length = 0;
+		var out = new BytesOutput();
+		var length = (bytes == null) ? 0 : bytes.length;
 		opcode |= 0x80;
-		bytes.writeByte(opcode);
+		out.writeByte(opcode);
+		if (length < 0x7E)
+		{
+			out.writeByte(length);
+		}
+		else if (length < 0xFFFF)
+		{
+			out.writeByte(0x7E);
+			out.writeByte(length >> 8 & 0xFF);
+			out.writeByte(length & 0xFF);
+		}
+		else
+		{
+			throw "Can't send data this large";
+		}
+
 		if (bytes != null)
 		{
-			length = bytes.length;
+			out.writeBytes(bytes, 0, bytes.length);
 		}
-		bytes.writeByte(length);
 
-		cnx.writeBytes(bytes.getBytes());
+		cnx.writeBytes(out.getBytes());
 	}
 
 	/**
@@ -167,7 +201,7 @@ class WebSocket extends hxnet.base.Protocol
 		var opcode = input.readByte();
 		var len = input.readByte();
 
-		var final = opcode & 0x80 != 0;
+		var final = (opcode & 0x80) != 0; // check byte 0
 		opcode = opcode & 0x0F;
 		var mask = len >> 7 == 1;
 		len = len & 0x7F;
@@ -184,11 +218,14 @@ class WebSocket extends hxnet.base.Protocol
 			var lenByte1 = input.readByte();
 			var lenByte2 = input.readByte();
 			var lenByte3 = input.readByte();
+			var lenByte4 = input.readByte();
+			var lenByte5 = input.readByte();
+			var lenByte6 = input.readByte();
+			var lenByte7 = input.readByte();
 			len = (lenByte0 << 24) + (lenByte1 << 16) + (lenByte2 << 8) + lenByte3;
 		}
 
 		var maskKey = (mask ? input.read(4) : null);
-
 		var payload = input.read(len);
 
 		if (mask)
@@ -202,22 +239,17 @@ class WebSocket extends hxnet.base.Protocol
 
 		return {
 			opcode: opcode,
-			mask: mask,
-			final: final,
 			bytes: payload
 		};
 	}
 
-	/**
-	 * Helper function to encode content into base 64
-	 */
-	private function encodeBase64(content:String):String
-	{
-		var suffix = switch (content.length % 3) {
-			case 2: "=";
-			case 1: "==";
-			default: "";
-		};
-		return BaseCode.encode(content, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/") + suffix;
-	}
+	private var _host:String;
+	private var _url:String;
+	private var _port:Int;
+	private var _key:String;
+	private var _origin:String;
+	private var _headers:Array<String>;
+	private var _useHttp:Bool = true;
+
+	static private var MAGIC_STRING:String = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 }

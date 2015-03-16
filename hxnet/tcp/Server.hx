@@ -47,7 +47,7 @@ class Server implements hxnet.interfaces.Server
 		}
 	}
 
-	public function update(timeout:Float=1)
+	public function update(?timeout:Float=null)
 	{
 		var len = buffer.length,
 			bytesReceived:Int,
@@ -64,7 +64,7 @@ class Server implements hxnet.interfaces.Server
 				cnx = factory.buildProtocol();
 				var connection = new Connection(client);
 				client.custom = cnx;
-				cnx.makeConnection(connection);
+				cnx.makeConnection(connection, false);
 			}
 			else
 			{

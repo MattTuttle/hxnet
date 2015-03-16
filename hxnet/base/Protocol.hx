@@ -81,7 +81,7 @@ class Protocol implements hxnet.interfaces.Protocol
 		return finish;
 	}
 
-	public function makeConnection(cnx:Connection) { this.cnx = cnx; }
+	public function makeConnection(cnx:Connection, isClient:Bool) { this.cnx = cnx; }
 
 	public function loseConnection(?reason:String) { this.cnx = null; }
 
