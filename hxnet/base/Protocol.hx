@@ -1,6 +1,7 @@
 package hxnet.base;
 
 import hxnet.interfaces.Connection;
+import hxnet.interfaces.Server;
 import haxe.io.Bytes;
 import haxe.io.BytesInput;
 import haxe.io.Eof;
@@ -81,11 +82,13 @@ class Protocol implements hxnet.interfaces.Protocol
 		return finish;
 	}
 
-	public function makeConnection(cnx:Connection, isClient:Bool) { this.cnx = cnx; }
+	public function onConnect(cnx:Connection) { this.cnx = cnx; }
+	public function onAccept(cnx:Connection, server:Server) { this.cnx = cnx; this.server = server; }
 
 	public function loseConnection(?reason:String) { this.cnx = null; }
 
 	private var cnx:Connection;
+	private var server:Server;
 
 	private var _packetLength:Int;
 	private var _packetPos:Int;

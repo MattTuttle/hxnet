@@ -16,75 +16,87 @@ import cpp.Lib;
 
 using StringTools;
 
+enum Opcode
+{
+	Continue;
+	Text(text:String);
+	Binary(data:Bytes);
+	Close;
+	Ping;
+	Pong;
+}
+
 /**
  * WebSocket protocol (RFC 6455)
  */
 class WebSocket extends hxnet.base.Protocol
 {
-	private static inline var WEBSOCKET_VERSION = "13";
-
-	private static inline var OPCODE_CONTINUE = 0x0;
-	private static inline var OPCODE_TEXT = 0x1;
-	private static inline var OPCODE_BINARY = 0x2;
-	private static inline var OPCODE_CLOSE = 0x8;
-	private static inline var OPCODE_PING = 0x9;
-	private static inline var OPCODE_PONG = 0xA;
 
 	/**
 	 * Construct the WebSocket protocol
 	 */
-	public function new(url:String, host:String, port:Int, origin:String, key:String="key")
+	public function new()
 	{
 		super();
 
-		_host = host;
-		_url = url;
-		_port = port;
-		_key = Base64.encode(Bytes.ofString(key));
-		_origin = origin;
+		// _key = Base64.encode(Bytes.ofString(key));
 		_headers = new Array<String>();
 	}
 
-	function setHeader(key:String, value:String)
+	/**
+	 * Set an HTTP header value
+	 * @param String key   The header key value
+	 * @param String value The header value
+	 */
+	function setHeader(key:String, value:String):Void
 	{
 		_headers.push(key + ": " + value);
 	}
 
-	function writeHeader(http:String)
+	/**
+	 * Write out the http header
+	 * @param  String http The version/status line of the http header
+	 */
+	function writeHeader(http:String):Void
 	{
 		_headers.insert(0, http);
 		cnx.writeBytes(Bytes.ofString(_headers.join("\r\n") + "\r\n\r\n"));
 		_headers = new Array<String>();
-		_useHttp = false;
 	}
 
 	/**
 	 * Upon connecting with another WebSocket send handshake
 	 * @param cnx The remote connection
 	 */
-	override public function makeConnection(cnx:Connection, isClient:Bool)
+	override public function onConnect(cnx:Connection):Void
 	{
-		super.makeConnection(cnx, isClient);
+		super.onConnect(cnx);
 
-		if (isClient)
-		{
-			setHeader("Host", _host + ":" + _port);
-			setHeader("Upgrade", "websocket");
-			setHeader("Connection", "Upgrade");
-			setHeader("Sec-WebSocket-Key", _key);
-			setHeader("Sec-WebSocket-Version", WEBSOCKET_VERSION);
-			setHeader("Origin", _origin);
+		setHeader("Host", _host + ":" + _port);
+		setHeader("Upgrade", "websocket");
+		setHeader("Connection", "Upgrade");
+		setHeader("Sec-WebSocket-Key", _key);
+		setHeader("Sec-WebSocket-Version", WEBSOCKET_VERSION);
+		setHeader("Origin", _origin);
 
-			// send headers
-			writeHeader("GET " + _url + " HTTP/1.1");
-		}
+		// send headers
+		writeHeader("GET " + _url + " HTTP/1.1");
+		onHandshake();
+	}
+
+	/**
+	 * Called after handshake is send. Must be called from an override.
+	 */
+	private function onHandshake():Void
+	{
+		_useHttp = false;
 	}
 
 	/**
 	 * When data is received for the protocol this method is called.
 	 * @param input The input data
 	 */
-	override public function dataReceived(input:Input)
+	override public function dataReceived(input:Input):Void
 	{
 		if (_useHttp) // http protocol
 		{
@@ -106,29 +118,26 @@ class WebSocket extends hxnet.base.Protocol
 				}
 			}
 			writeHeader("HTTP/1.1 101 Switching Protocols");
+			onHandshake();
 		}
-		else // websocket protocol
+		else
 		{
-			// loop until we get text or binary data
-			var frame = recvFrame(input);
-
-			switch (frame.opcode)
+			// websocket protocol
+			switch (recvFrame(input))
 			{
-				case OPCODE_CONTINUE: // continuation
+				case Continue: // continuation
 					// return frame.bytes.toString();
 					throw "Continuation should be handled by recvFrame()";
-				case OPCODE_TEXT: // text
-					recvText(frame.bytes.toString());
-				case OPCODE_BINARY: // binary
-					recvBinary(frame.bytes);
-				case OPCODE_CLOSE: // close
+				case Text(text): // text
+					recvText(text);
+				case Binary(bytes): // binary
+					recvBinary(bytes);
+				case Close: // close
 					cnx.close();
-				case OPCODE_PING: // ping
-					sendFrame(OPCODE_PONG); // send pong
-				case OPCODE_PONG: // pong
+				case Ping: // ping
+					cnx.writeBytes(createFrame(Pong)); // send pong
+				case Pong: // pong
 					// do nothing
-				default:
-					throw "Unsupported websocket opcode: " + frame.opcode;
 			}
 		}
 	}
@@ -136,27 +145,27 @@ class WebSocket extends hxnet.base.Protocol
 	/**
 	 * Overridable functions for receiving text
 	 */
-	private function recvText(text:String) { }
+	private function recvText(text:String):Void { }
 
 	/**
 	 * Overridable functions for receiving binary data
 	 */
-	private function recvBinary(data:Bytes) { }
+	private function recvBinary(data:Bytes):Void { }
 
 	/**
 	 * Sends text over connection
 	 */
-	public function sendText(text:String)
+	public function sendText(text:String):Void
 	{
-		sendFrame(OPCODE_TEXT, Bytes.ofString(text));
+		cnx.writeBytes(createFrame(Text(text)));
 	}
 
 	/**
 	 * Sends binary data over connection
 	 */
-	public function sendBinary(bytes:Bytes)
+	public function sendBinary(bytes:Bytes):Void
 	{
-		sendFrame(OPCODE_BINARY, bytes);
+		cnx.writeBytes(createFrame(Binary(bytes)));
 	}
 
 	/**
@@ -164,39 +173,52 @@ class WebSocket extends hxnet.base.Protocol
 	 * @param opcode  Value of the WebSocket protocol opcode
 	 * @param bytes   The data to send, if any
 	 */
-	private function sendFrame(opcode:Int, ?bytes:haxe.io.Bytes)
+	private function createFrame(opcode:Opcode):Bytes
 	{
+		var bytes = null;
 		var out = new BytesOutput();
-		var length = (bytes == null) ? 0 : bytes.length;
-		opcode |= 0x80;
-		out.writeByte(opcode);
-		if (length < 0x7E)
+
+		out.writeByte((switch (opcode) {
+			case Continue: OPCODE_CONTINUE;
+			case Text(text): bytes = Bytes.ofString(text); OPCODE_TEXT;
+			case Binary(data): bytes = data; OPCODE_BINARY;
+			case Close: OPCODE_CLOSE;
+			case Ping: OPCODE_PING;
+			case Pong: OPCODE_PONG;
+		}) | 0x80);
+
+		if (bytes == null)
 		{
-			out.writeByte(length);
-		}
-		else if (length < 0xFFFF)
-		{
-			out.writeByte(0x7E);
-			out.writeByte(length >> 8 & 0xFF);
-			out.writeByte(length & 0xFF);
+			out.writeByte(0); // zero length since there is no data
 		}
 		else
 		{
-			throw "Can't send data this large";
+			var len = bytes.length;
+			if (len < 0x7E)
+			{
+				out.writeByte(len);
+			}
+			else if (len < 0xFFFF)
+			{
+				out.writeByte(0x7E);
+				out.writeByte(len >> 8 & 0xFF);
+				out.writeByte(len & 0xFF);
+			}
+			else
+			{
+				throw "Can't send data this large yet";
+			}
+
+			out.writeBytes(bytes, 0, len);
 		}
 
-		if (bytes != null)
-		{
-			out.writeBytes(bytes, 0, bytes.length);
-		}
-
-		cnx.writeBytes(out.getBytes());
+		return out.getBytes();
 	}
 
 	/**
 	 * Reads a complete WebSocket frame
 	 */
-	private inline function recvFrame(input:Input)
+	private function recvFrame(input:Input):Opcode
 	{
 		var opcode = input.readByte();
 		var len = input.readByte();
@@ -208,21 +230,14 @@ class WebSocket extends hxnet.base.Protocol
 
 		if (len == 126)
 		{
-			var lenByte0 = input.readByte();
-			var lenByte1 = input.readByte();
-			len = (lenByte0 << 8) + lenByte1;
+			len = (input.readByte() << 8) + input.readByte();
 		}
 		else if (len > 126)
 		{
-			var lenByte0 = input.readByte();
-			var lenByte1 = input.readByte();
-			var lenByte2 = input.readByte();
-			var lenByte3 = input.readByte();
-			var lenByte4 = input.readByte();
-			var lenByte5 = input.readByte();
-			var lenByte6 = input.readByte();
-			var lenByte7 = input.readByte();
-			len = (lenByte0 << 24) + (lenByte1 << 16) + (lenByte2 << 8) + lenByte3;
+			var high = (input.readByte() << 24) + (input.readByte() << 16) + (input.readByte() << 8) + input.readByte();
+			var low = (input.readByte() << 24) + (input.readByte() << 16) + (input.readByte() << 8) + input.readByte();
+			var len = haxe.Int64.make(high, low);
+			trace(len);
 		}
 
 		var maskKey = (mask ? input.read(4) : null);
@@ -237,10 +252,16 @@ class WebSocket extends hxnet.base.Protocol
 			}
 		}
 
-		return {
-			opcode: opcode,
-			bytes: payload
-		};
+		// is this separation necessary?
+		return switch (opcode) {
+			case OPCODE_CONTINUE: Continue;
+			case OPCODE_TEXT: Text(payload.toString());
+			case OPCODE_BINARY: Binary(payload);
+			case OPCODE_CLOSE: Close;
+			case OPCODE_PING: Ping;
+			case OPCODE_PONG: Pong;
+			default: throw "Unsupported websocket opcode: " + opcode;
+		}
 	}
 
 	private var _host:String;
@@ -251,5 +272,14 @@ class WebSocket extends hxnet.base.Protocol
 	private var _headers:Array<String>;
 	private var _useHttp:Bool = true;
 
-	static private var MAGIC_STRING:String = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+	private static inline var WEBSOCKET_VERSION = "13";
+
+	private static inline var OPCODE_CONTINUE = 0x0;
+	private static inline var OPCODE_TEXT = 0x1;
+	private static inline var OPCODE_BINARY = 0x2;
+	private static inline var OPCODE_CLOSE = 0x8;
+	private static inline var OPCODE_PING = 0x9;
+	private static inline var OPCODE_PONG = 0xA;
+
+	private static inline var MAGIC_STRING:String = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 }

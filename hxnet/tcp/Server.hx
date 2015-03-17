@@ -29,6 +29,7 @@ class Server implements hxnet.interfaces.Server
 		listener = new Socket();
 
 		readSockets = [listener];
+		clients = new Map<Socket, Connection>();
 	}
 
 	public function listen()
@@ -47,49 +48,64 @@ class Server implements hxnet.interfaces.Server
 		}
 	}
 
-	public function update(?timeout:Float=null)
+	public function update(timeout:Float=1):Void
 	{
-		var len = buffer.length,
-			bytesReceived:Int,
-			cnx:Protocol;
+		var protocol:Protocol;
+		var bytesReceived:Int;
 		var select = Socket.select(readSockets, null, null, timeout);
 		for (socket in select.read)
 		{
 			if (socket == listener)
 			{
 				var client = listener.accept();
-				client.setBlocking(false);
-				readSockets.push(client);
-
-				cnx = factory.buildProtocol();
 				var connection = new Connection(client);
-				client.custom = cnx;
-				cnx.makeConnection(connection, false);
+
+				readSockets.push(client);
+				clients.set(client, connection);
+
+				client.setBlocking(false);
+				client.custom = protocol = factory.buildProtocol();
+				protocol.onAccept(connection, this);
 			}
 			else
 			{
-				cnx = socket.custom;
+				protocol = socket.custom;
 				try
 				{
-					bytesReceived = socket.input.readBytes(buffer, 0, len);
+					bytesReceived = socket.input.readBytes(buffer, 0, buffer.length);
 					// check that buffer was filled
 					if (bytesReceived > 0)
 					{
-						cnx.dataReceived(new BytesInput(buffer, 0, bytesReceived));
+						protocol.dataReceived(new BytesInput(buffer, 0, bytesReceived));
 					}
 				}
 				catch (e:haxe.io.Eof)
 				{
-					cnx.loseConnection("disconnected");
+					protocol.loseConnection("disconnected");
 					socket.close();
 					readSockets.remove(socket);
+					clients.remove(socket);
 				}
-				if (!cnx.isConnected())
+				if (!protocol.isConnected())
 				{
 					readSockets.remove(socket);
+					clients.remove(socket);
 				}
 			}
 		}
+	}
+
+	public function broadcast(bytes:Bytes):Bool
+	{
+		var success = true;
+		for (client in clients)
+		{
+			if (!client.writeBytes(bytes))
+			{
+				success = false;
+			}
+		}
+		return success;
 	}
 
 	public function close()
@@ -106,6 +122,7 @@ class Server implements hxnet.interfaces.Server
 
 	private var factory:Factory;
 	private var readSockets:Array<Socket>;
+	private var clients:Map<Socket, Connection>;
 	private var listener:Socket;
 
 	private var buffer:Bytes;

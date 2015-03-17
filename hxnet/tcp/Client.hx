@@ -39,7 +39,7 @@ class Client implements hxnet.interfaces.Client
 			readSockets = [client];
 			if (protocol != null)
 			{
-				protocol.makeConnection(new Connection(client));
+				protocol.onConnect(new Connection(client));
 			}
 		}
 		catch (e:Dynamic)
@@ -64,7 +64,11 @@ class Client implements hxnet.interfaces.Client
 			}
 			else
 			{
-				select(timeout);
+				var select = Socket.select(readSockets, null, null, timeout);
+				for (socket in select.read)
+				{
+					readSocket(socket);
+				}
 			}
 #end
 		}
@@ -109,17 +113,6 @@ class Client implements hxnet.interfaces.Client
 		}
 	}
 
-#if !flash
-	private inline function select(timeout:Float=1)
-	{
-		var select = Socket.select(readSockets, null, null, timeout);
-		for (socket in select.read)
-		{
-			readSocket(socket);
-		}
-	}
-#end
-
 	public function close()
 	{
 		client.close();
@@ -146,7 +139,7 @@ class Client implements hxnet.interfaces.Client
 	{
 		if (client != null)
 		{
-			value.makeConnection(new Connection(client));
+			value.onConnect(new Connection(client));
 		}
 		return protocol = value;
 	}
