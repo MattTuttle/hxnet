@@ -133,6 +133,7 @@ class WebSocket extends hxnet.base.Protocol
 				case Binary(bytes): // binary
 					recvBinary(bytes);
 				case Close: // close
+					loseConnection("close connection");
 					cnx.close();
 				case Ping: // ping
 					cnx.writeBytes(createFrame(Pong)); // send pong
