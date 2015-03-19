@@ -5,6 +5,6 @@ import haxe.io.Bytes;
 interface Connection
 {
 	public function isOpen():Bool;
-	public function writeBytes(bytes:Bytes, writeLength:Bool=false):Bool;
+	public function writeBytes(bytes:Bytes):Bool;
 	public function close():Void;
 }
