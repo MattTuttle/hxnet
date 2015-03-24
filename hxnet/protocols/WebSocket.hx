@@ -174,7 +174,7 @@ class WebSocket extends hxnet.base.Protocol
 	 * @param opcode  Value of the WebSocket protocol opcode
 	 * @param bytes   The data to send, if any
 	 */
-	private function createFrame(opcode:Opcode):Bytes
+	public static function createFrame(opcode:Opcode):Bytes
 	{
 		var bytes = null;
 		var out = new BytesOutput();
