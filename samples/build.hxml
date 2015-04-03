@@ -1,0 +1,17 @@
+-cp samples
+-cp ..
+
+--each
+
+-neko websocket.n
+-main websocket.Echo
+
+--next
+
+-neko telnet.n
+-main telnet.Echo
+
+--next
+
+-neko client.n
+-main telnet.Client
