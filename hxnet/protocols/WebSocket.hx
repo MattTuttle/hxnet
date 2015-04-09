@@ -126,8 +126,6 @@ class WebSocket extends hxnet.base.Protocol
 			switch (recvFrame(input))
 			{
 				case Continue: // continuation
-					// return frame.bytes.toString();
-					throw "Continuation should be handled by recvFrame()";
 				case Text(text): // text
 					recvText(text);
 				case Binary(bytes): // binary
@@ -221,48 +219,78 @@ class WebSocket extends hxnet.base.Protocol
 	 */
 	private function recvFrame(input:Input):Opcode
 	{
-		var opcode = input.readByte();
-		var len = input.readByte();
-
-		var final = (opcode & 0x80) != 0; // check byte 0
-		opcode = opcode & 0x0F;
-		var mask = len >> 7 == 1;
-		len = len & 0x7F;
-
-		if (len == 126)
+		if (_payload == null)
 		{
-			len = (input.readByte() << 8) + input.readByte();
-		}
-		else if (len > 126)
-		{
-			var high = (input.readByte() << 24) + (input.readByte() << 16) + (input.readByte() << 8) + input.readByte();
-			var low = (input.readByte() << 24) + (input.readByte() << 16) + (input.readByte() << 8) + input.readByte();
-			var len = haxe.Int64.make(high, low);
-			trace(len);
-		}
+			_opcode = input.readByte();
+			_bytesTotal = input.readByte();
 
-		var maskKey = (mask ? input.read(4) : null);
-		var payload = input.read(len);
+			_final = (_opcode & 0x80) != 0; // check byte 0
+			_opcode = _opcode & 0x0F;
+			var mask = _bytesTotal >> 7 == 1;
+			_bytesTotal = _bytesTotal & 0x7F;
 
-		if (mask)
-		{
-			// unmask data
-			for (i in 0...payload.length)
+			if (_bytesTotal == 126)
 			{
-				payload.set(i, payload.get(i) ^ maskKey.get(i % 4));
+				_bytesTotal = (input.readByte() << 8) + input.readByte();
+			}
+			else if (_bytesTotal > 126)
+			{
+				var high = (input.readByte() << 24) + (input.readByte() << 16) + (input.readByte() << 8) + input.readByte();
+				var low = (input.readByte() << 24) + (input.readByte() << 16) + (input.readByte() << 8) + input.readByte();
+				// TODO: prevent data truncation
+				_bytesTotal = haxe.Int64.toInt(haxe.Int64.make(high, low));
+			}
+
+			_maskKey = (mask ? input.read(4) : null);
+			_payload = Bytes.alloc(_bytesTotal);
+			_bytesRead = 0;
+		}
+
+		_bytesRead += input.readBytes(_payload, _bytesRead, _bytesTotal - _bytesRead);
+
+		if (_bytesRead == _bytesTotal)
+		{
+			if (_final)
+			{
+				if (_maskKey != null)
+				{
+					// unmask data
+					for (i in 0..._payload.length)
+					{
+						_payload.set(i, _payload.get(i) ^ _maskKey.get(i % 4));
+					}
+				}
+
+				var result = switch (_opcode) {
+					case OPCODE_CONTINUE: Continue;
+					case OPCODE_TEXT: Text(_payload.toString());
+					case OPCODE_BINARY: Binary(_payload);
+					case OPCODE_CLOSE: Close;
+					case OPCODE_PING: Ping;
+					case OPCODE_PONG: Pong;
+					default: throw "Unsupported websocket opcode: " + _opcode;
+				}
+				_payload = null;
+				return result;
+			}
+			else
+			{
+				if (_lastPayload == null)
+				{
+					_lastPayload = _payload;
+				}
+				else
+				{
+					var b = Bytes.alloc(_lastPayload.length + _payload.length);
+					b.blit(0, _lastPayload, 0, _lastPayload.length);
+					b.blit(_lastPayload.length, _payload, 0, _payload.length);
+					_lastPayload = b;
+				}
+				_payload = null;
 			}
 		}
 
-		// is this separation necessary?
-		return switch (opcode) {
-			case OPCODE_CONTINUE: Continue;
-			case OPCODE_TEXT: Text(payload.toString());
-			case OPCODE_BINARY: Binary(payload);
-			case OPCODE_CLOSE: Close;
-			case OPCODE_PING: Ping;
-			case OPCODE_PONG: Pong;
-			default: throw "Unsupported websocket opcode: " + opcode;
-		}
+		return Continue;
 	}
 
 	private var _host:String;
@@ -272,6 +300,14 @@ class WebSocket extends hxnet.base.Protocol
 	private var _origin:String;
 	private var _headers:Array<String>;
 	private var _useHttp:Bool = true;
+
+	private var _payload:Bytes;
+	private var _lastPayload:Bytes;
+	private var _bytesRead:Int;
+	private var _bytesTotal:Int;
+	private var _maskKey:Bytes;
+	private var _opcode:Int;
+	private var _final:Bool;
 
 	private static inline var WEBSOCKET_VERSION = "13";
 
