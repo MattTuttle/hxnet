@@ -39,7 +39,6 @@ class WebSocket extends hxnet.base.Protocol
 	{
 		super();
 
-		// _key = Base64.encode(Bytes.ofString(key));
 		_headers = new Array<String>();
 	}
 
@@ -72,6 +71,9 @@ class WebSocket extends hxnet.base.Protocol
 	{
 		super.onConnect(cnx);
 
+		var chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+		var key = [for (i in 0...10) chars.charAt(Std.int(Math.random() * chars.length))].join("");
+		_key = Base64.encode(Bytes.ofString(key));
 		setHeader("Host", _host + ":" + _port);
 		setHeader("Upgrade", "websocket");
 		setHeader("Connection", "Upgrade");
@@ -100,7 +102,7 @@ class WebSocket extends hxnet.base.Protocol
 		if (_useHttp) // http protocol
 		{
 			var line:String;
-			var accepted = false;
+			var switchProtocols = false;
 			while((line = input.readLine()) != "")
 			{
 				var colon = line.indexOf(":");
@@ -110,15 +112,23 @@ class WebSocket extends hxnet.base.Protocol
 					var value = line.substr(colon + 1).trim();
 					if (key == "Sec-WebSocket-Key")
 					{
-						var accept = Base64.encode(Sha1.make(Bytes.ofString(value + MAGIC_STRING)));
+						_key = value;
 						setHeader("Upgrade", "websocket");
 						setHeader("Connection", "upgrade");
-						setHeader("Sec-WebSocket-Accept", accept);
-						accepted = true;
+						setHeader("Sec-WebSocket-Accept", acceptKey());
+						switchProtocols = true;
+					}
+					else if (key == "Sec-WebSocket-Accept")
+					{
+						if (acceptKey() != value)
+						{
+							throw "Mismatched key for Sec-WebSocket-Accept";
+						}
+						switchProtocols = false;
 					}
 				}
 			}
-			if (accepted) writeHeader("HTTP/1.1 101 Switching Protocols");
+			if (switchProtocols) writeHeader("HTTP/1.1 101 Switching Protocols");
 			onHandshake();
 		}
 		else
@@ -292,6 +302,11 @@ class WebSocket extends hxnet.base.Protocol
 		}
 
 		return Continue;
+	}
+
+	private inline function acceptKey():String
+	{
+		return Base64.encode(Sha1.make(Bytes.ofString(_key + MAGIC_STRING)));
 	}
 
 	private var _host:String;
