@@ -81,7 +81,6 @@ class WebSocket extends hxnet.base.Protocol
 
 		// send headers
 		writeHeader("GET " + _url + " HTTP/1.1");
-		onHandshake();
 	}
 
 	/**
@@ -101,6 +100,7 @@ class WebSocket extends hxnet.base.Protocol
 		if (_useHttp) // http protocol
 		{
 			var line:String;
+			var accepted = false;
 			while((line = input.readLine()) != "")
 			{
 				var colon = line.indexOf(":");
@@ -114,10 +114,11 @@ class WebSocket extends hxnet.base.Protocol
 						setHeader("Upgrade", "websocket");
 						setHeader("Connection", "upgrade");
 						setHeader("Sec-WebSocket-Accept", accept);
+						accepted = true;
 					}
 				}
 			}
-			writeHeader("HTTP/1.1 101 Switching Protocols");
+			if (accepted) writeHeader("HTTP/1.1 101 Switching Protocols");
 			onHandshake();
 		}
 		else
