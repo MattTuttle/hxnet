@@ -37,7 +37,7 @@ class Server implements hxnet.interfaces.Server
 		lastUpdate = Timer.stamp();
 	}
 
-	public function update(timeout:Float=1)
+	public function update(timeout:Float=0)
 	{
 		var now = Timer.stamp();
 		var delta = now - lastUpdate;

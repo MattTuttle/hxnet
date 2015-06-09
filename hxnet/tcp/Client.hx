@@ -49,7 +49,7 @@ class Client implements hxnet.interfaces.Client
 		}
 	}
 
-	public function update(timeout:Float=1)
+	public function update(timeout:Float=0)
 	{
 		if (!connected) return;
 

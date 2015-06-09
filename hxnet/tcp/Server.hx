@@ -48,7 +48,7 @@ class Server implements hxnet.interfaces.Server
 		}
 	}
 
-	public function update(timeout:Float=1):Void
+	public function update(timeout:Float=0):Void
 	{
 		var protocol:Protocol;
 		var bytesReceived:Int;
