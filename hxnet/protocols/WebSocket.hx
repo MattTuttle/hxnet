@@ -71,12 +71,15 @@ class WebSocket extends hxnet.base.Protocol
 	{
 		super.onConnect(cnx);
 
+		// generate a random key
 		var chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-		var key = [for (i in 0...10) chars.charAt(Std.int(Math.random() * chars.length))].join("");
+		var key = "";
+		for (i in 0...10) key += chars.charAt(Std.int(Math.random() * chars.length));
 		_key = Base64.encode(Bytes.ofString(key));
+
 		setHeader("Host", _host + ":" + _port);
 		setHeader("Upgrade", "websocket");
-		setHeader("Connection", "Upgrade");
+		setHeader("Connection", "upgrade");
 		setHeader("Sec-WebSocket-Key", _key);
 		setHeader("Sec-WebSocket-Version", WEBSOCKET_VERSION);
 		setHeader("Origin", _origin);
@@ -112,15 +115,14 @@ class WebSocket extends hxnet.base.Protocol
 					var value = line.substr(colon + 1).trim();
 					if (key == "Sec-WebSocket-Key")
 					{
-						_key = value;
 						setHeader("Upgrade", "websocket");
 						setHeader("Connection", "upgrade");
-						setHeader("Sec-WebSocket-Accept", acceptKey());
+						setHeader("Sec-WebSocket-Accept", acceptKey(_key = value));
 						switchProtocols = true;
 					}
 					else if (key == "Sec-WebSocket-Accept")
 					{
-						if (acceptKey() != value)
+						if (acceptKey(_key) != value)
 						{
 							throw "Mismatched key for Sec-WebSocket-Accept";
 						}
@@ -304,9 +306,9 @@ class WebSocket extends hxnet.base.Protocol
 		return Continue;
 	}
 
-	private inline function acceptKey():String
+	private inline function acceptKey(key:String):String
 	{
-		return Base64.encode(Sha1.make(Bytes.ofString(_key + MAGIC_STRING)));
+		return Base64.encode(Sha1.make(Bytes.ofString(key + MAGIC_STRING)));
 	}
 
 	private var _host:String;
