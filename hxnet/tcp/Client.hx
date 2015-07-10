@@ -116,9 +116,9 @@ class Client implements hxnet.interfaces.Client
 	public function close()
 	{
 		client.close();
+		client = null;
 		protocol.loseConnection();
 		protocol = null;
-		client = null;
 	}
 
 	private inline function get_connected():Bool
@@ -137,7 +137,7 @@ class Client implements hxnet.interfaces.Client
 
 	private function set_protocol(value:Protocol):Protocol
 	{
-		if (client != null)
+		if (client != null && value != null)
 		{
 			value.onConnect(new Connection(client));
 		}
