@@ -29,6 +29,19 @@ class Client implements hxnet.interfaces.Client
 		{
 			client = new Socket();
 #if flash
+			/*
+			client.addEventListener(flash.events.Event.CONNECT, function( _ ) {
+				trace('connected');
+			});
+
+			client.addEventListener(flash.events.IOErrorEvent.IO_ERROR, function( error ) {
+				trace(error);
+			});
+
+			client.addEventListener(flash.events.SecurityErrorEvent.SECURITY_ERROR, function( error ) {
+				trace(error);
+			});
+			*/
 			client.connect(hostname, port);
 #else
 			if (hostname == null) hostname = Host.localhost();
@@ -95,7 +108,12 @@ class Client implements hxnet.interfaces.Client
 			catch (e:Dynamic)
 			{
 				// end of stream
-                if (Std.is(e, haxe.io.Eof) || e == haxe.io.Error.Blocked)
+                if (	Std.is(e, haxe.io.Eof)
+					||	e == haxe.io.Error.Blocked
+#if flash
+					|| Std.is(e, flash.errors.EOFError)
+#end
+				)
 				{
 					buffer.set(bytesReceived, byte);
 					break;
@@ -147,5 +165,4 @@ class Client implements hxnet.interfaces.Client
 	private var client:Socket;
 	private var readSockets:Array<Socket>;
 	private var buffer:Bytes;
-
 }

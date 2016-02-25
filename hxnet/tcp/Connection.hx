@@ -30,6 +30,8 @@ class Connection implements hxnet.interfaces.Connection
 			{
 				socket.writeByte(bytes.get(i));
 			}
+
+			socket.flush();
 #else
 			// if (writeLength) socket.output.writeInt32(bytes.length);
 			socket.output.writeBytes(bytes, 0, bytes.length);
