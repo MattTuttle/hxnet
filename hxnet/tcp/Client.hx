@@ -29,19 +29,6 @@ class Client implements hxnet.interfaces.Client
 		{
 			client = new Socket();
 #if flash
-			/*
-			client.addEventListener(flash.events.Event.CONNECT, function( _ ) {
-				trace('connected');
-			});
-
-			client.addEventListener(flash.events.IOErrorEvent.IO_ERROR, function( error ) {
-				trace(error);
-			});
-
-			client.addEventListener(flash.events.SecurityErrorEvent.SECURITY_ERROR, function( error ) {
-				trace(error);
-			});
-			*/
 			client.connect(hostname, port);
 #else
 			if (hostname == null) hostname = Host.localhost();
