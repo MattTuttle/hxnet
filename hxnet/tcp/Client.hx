@@ -95,12 +95,7 @@ class Client implements hxnet.interfaces.Client
 			catch (e:Dynamic)
 			{
 				// end of stream
-                if (	Std.is(e, haxe.io.Eof)
-					||	e == haxe.io.Error.Blocked
-#if flash
-					|| Std.is(e, flash.errors.EOFError)
-#end
-				)
+                if (Std.is(e, haxe.io.Eof) || e == haxe.io.Error.Blocked #if flash || Std.is(e, flash.errors.EOFError) #end)
 				{
 					buffer.set(bytesReceived, byte);
 					break;
@@ -152,4 +147,5 @@ class Client implements hxnet.interfaces.Client
 	private var client:Socket;
 	private var readSockets:Array<Socket>;
 	private var buffer:Bytes;
+
 }
